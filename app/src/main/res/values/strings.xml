@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Satchel</string>
+    <string name="title_activity_main">com.cse40333.satchel.MainActivity</string>
 </resources>
