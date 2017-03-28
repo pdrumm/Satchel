@@ -3,26 +3,23 @@ package com.cse40333.satchel;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.LoaderManager;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.app.LoaderManager.LoaderCallbacks;
-
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.database.Cursor;
-import android.net.Uri;
-
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -44,9 +41,9 @@ import static android.Manifest.permission.READ_CONTACTS;
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
+public class SignUpActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private static final String TAG = LoginActivity.class.getName();
+    private static final String TAG = SignUpActivity.class.getName();
 
     /**
      * Id to identity READ_CONTACTS permission request.
@@ -54,92 +51,67 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private static final int REQUEST_READ_CONTACTS = 0;
 
     /**
-     * Keep track of the login task to ensure we can cancel it if requested.
+     * Keep track of the signup/login task to ensure we can cancel it if requested.
      */
     private Task mAuthTask = null;
 
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
+    private EditText mPassword2View;
     private View mProgressView;
-    private View mLoginFormView;
+    private View mSignUpFormView;
 
     // Firebase references
     private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.activity_sign_up);
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
 
-        // attempt login if user presses enter
+        // attempt signup if user presses enter
         mPasswordView = (EditText) findViewById(R.id.password);
-        mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        mPassword2View = (EditText) findViewById(R.id.password2);
+        mPassword2View.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == R.id.login || id == EditorInfo.IME_NULL) {
-                    attemptLogin();
+                if (id == R.id.signup || id == EditorInfo.IME_NULL) {
+                    attemptSignUp();
                     return true;
                 }
                 return false;
             }
         });
 
-        // attempt login if user clicks login button
-        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
-        mEmailSignInButton.setOnClickListener(new OnClickListener() {
+        // attempt signup if user clicks signup button
+        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_up_button);
+        mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptLogin();
+                attemptSignUp();
             }
         });
 
-        mLoginFormView = findViewById(R.id.login_form);
-        mProgressView = findViewById(R.id.login_progress);
+        mSignUpFormView = findViewById(R.id.signup_form);
+        mProgressView = findViewById(R.id.signup_progress);
 
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // User is signed in
-                    Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                    // User is signed out
-                    Log.d(TAG, "onAuthStateChanged:signed_out");
-                }
-            }
-        };
 
-        // Switch to sign up when user clicks
-        TextView signUpText = (TextView) findViewById(R.id.sign_up_link);
-        OnClickListener signUpClicked = new OnClickListener() {
+        // Switch to sign in when user clicks
+        TextView signInText = (TextView) findViewById(R.id.sign_in_link);
+        View.OnClickListener signInClicked = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), SignUpActivity.class);
+                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
                 startActivity(intent);
             }
         };
-        signUpText.setOnClickListener(signUpClicked);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (mAuthListener != null) {
-            mAuth.removeAuthStateListener(mAuthListener);
-        }
+        signInText.setOnClickListener(signInClicked);
     }
 
     private void populateAutoComplete() {
@@ -187,11 +159,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
 
     /**
-     * Attempts to sign in the account specified by the login form.
+     * Attempts to register the account specified by the sign up form.
      * If there are form errors (invalid email, missing fields, etc.), the
-     * errors are presented and no actual login attempt is made.
+     * errors are presented and no actual sign up attempt is made.
      */
-    private void attemptLogin() {
+    private void attemptSignUp() {
         if (mAuthTask != null) {
             return;
         }
@@ -200,9 +172,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
-        // Store values at the time of the login attempt.
+        // Store values at the time of the signup attempt.
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
+        String password2 = mPassword2View.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
@@ -211,6 +184,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
+            cancel = true;
+        }
+
+        // Check that the passwords match
+        if (!password.equals(password2)) {
+            mPassword2View.setError(getString(R.string.error_passwords_dont_match));
+            mPassword2View.setText("");
+            focusView = mPassword2View;
             cancel = true;
         }
 
@@ -234,21 +215,23 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // perform the user login attempt.
             showProgress(true);
 
-            // Authenticate with Firebase
-            mAuthTask = mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+            // Register with Firebase
+            mAuthTask = mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
-                    Log.d(TAG, "signInWithEmail:onComplete:" + task.isSuccessful());
+                    Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
 
-                    // If sign in fails, display a message to the user. If sign succeeds
+                    // If sign in fails, display a message to the user. If sign in succeeds
                     // the auth state listener will be notified and logic to handle the
                     // signed in user can be handled in the listener.
                     if (!task.isSuccessful()) {
-                        Log.w(TAG, "signInWithEmail:failed", task.getException());
+                        Log.w(TAG, "createUserWithEmail:failed", task.getException());
                         mAuthTask = null;
+                        mPasswordView.setText("");
+                        mPassword2View.setText("");
                         showProgress(false);
-                        mPasswordView.setError(getString(R.string.error_incorrect_password));
-                        mPasswordView.requestFocus();
+                        mEmailView.setError(task.getException().getMessage());
+                        mEmailView.requestFocus();
                     } else {
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(intent);
@@ -281,12 +264,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
+            mSignUpFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            mSignUpFormView.animate().setDuration(shortAnimTime).alpha(
                     show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+                    mSignUpFormView.setVisibility(show ? View.GONE : View.VISIBLE);
                 }
             });
 
@@ -302,7 +285,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            mSignUpFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
     }
 
@@ -343,7 +326,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private void addEmailsToAutoComplete(List<String> emailAddressCollection) {
         //Create adapter to tell the AutoCompleteTextView what to show in its dropdown list.
         ArrayAdapter<String> adapter =
-                new ArrayAdapter<>(LoginActivity.this,
+                new ArrayAdapter<>(SignUpActivity.this,
                         android.R.layout.simple_dropdown_item_1line, emailAddressCollection);
 
         mEmailView.setAdapter(adapter);

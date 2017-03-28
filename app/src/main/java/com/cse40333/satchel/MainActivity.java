@@ -31,5 +31,8 @@ public class MainActivity extends AppCompatActivity {
         viewPagerAdapter.addFragment(new MessagesFragment(), "Messages");
         viewPager.setAdapter(viewPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
+
+        com.google.firebase.auth.FirebaseAuth mAuth = com.google.firebase.auth.FirebaseAuth.getInstance();
+        android.util.Log.d("fb", mAuth.getCurrentUser().getEmail());
     }
 }
