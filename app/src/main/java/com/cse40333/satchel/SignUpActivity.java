@@ -7,6 +7,7 @@ import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -54,6 +55,9 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
      * Keep track of the signup/login task to ensure we can cancel it if requested.
      */
     private Task mAuthTask = null;
+
+    // System preferences
+    final String PREFS_NAME = "MyPrefsFile";
 
     // UI references.
     private AutoCompleteTextView mEmailView;

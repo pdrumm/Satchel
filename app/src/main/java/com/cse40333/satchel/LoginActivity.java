@@ -66,7 +66,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     // Firebase references
     private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,18 +102,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // User is signed in
-                    Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                    // User is signed out
-                    Log.d(TAG, "onAuthStateChanged:signed_out");
-                }
-            }
-        };
 
         // Switch to sign up when user clicks
         TextView signUpText = (TextView) findViewById(R.id.sign_up_link);
@@ -126,20 +113,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
         };
         signUpText.setOnClickListener(signUpClicked);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (mAuthListener != null) {
-            mAuth.removeAuthStateListener(mAuthListener);
-        }
     }
 
     private void populateAutoComplete() {
