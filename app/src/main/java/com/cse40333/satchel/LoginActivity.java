@@ -54,6 +54,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     private static final int REQUEST_READ_CONTACTS = 0;
 
+    /**
+     * Keep track of the login task to ensure we can cancel it if requested.
+     */
+    private Task mAuthTask = null;
+
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
@@ -111,6 +116,16 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 }
             }
         };
+
+        // Switch to sign up when user clicks
+        TextView signUpText = (TextView) findViewById(R.id.sign_up_link);
+        OnClickListener signUpClicked = new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO: start signup activity, finish()
+            }
+        };
+        signUpText.setOnClickListener(signUpClicked);
     }
 
     @Override
@@ -178,6 +193,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     private void attemptLogin() {
         if (mAuthTask != null) {
+            System.out.println("busy");
             return;
         }
 
@@ -220,7 +236,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(true);
 
             // Authenticate with Firebase
-            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+            mAuthTask = mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
                     Log.d(TAG, "signInWithEmail:onComplete:" + task.isSuccessful());
@@ -230,6 +246,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     // signed in user can be handled in the listener.
                     if (!task.isSuccessful()) {
                         Log.w(TAG, "signInWithEmail:failed", task.getException());
+                        mAuthTask = null;
                         showProgress(false);
                         mPasswordView.setError(getString(R.string.error_incorrect_password));
                         mPasswordView.requestFocus();
