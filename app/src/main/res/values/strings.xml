@@ -20,4 +20,9 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
+
+    <!-- Strings related to New Item -->
+    <string name="item_name">Name</string>
+    <string name="add_item_thumbnail_btn">Select Photo</string>
+
 </resources>

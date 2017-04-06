@@ -3,16 +3,16 @@ package com.cse40333.satchel.firebaseNodes;
 import com.google.firebase.database.IgnoreExtraProperties;
 
 @IgnoreExtraProperties
-public class UsersItem {
+public class UserItem {
 
     public String name;
     public String ownerName;
     public String thumbnailPath;
     public boolean favorite;
 
-    public UsersItem() {}
+    public UserItem() {}
 
-    public UsersItem(String name, String ownerName, String thumbnailPath, boolean favorite) {
+    public UserItem(String name, String ownerName, String thumbnailPath, boolean favorite) {
         this.name = name;
         this.ownerName = ownerName;
         this.thumbnailPath = thumbnailPath;

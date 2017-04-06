@@ -21,7 +21,7 @@
         android:elevation="3dp"
         app:pressedTranslationZ="6dp"
         app:rippleColor="#FFF"
-        android:layout_margin="5dp"
+        android:layout_margin="10dp"
         />
 
 </FrameLayout>

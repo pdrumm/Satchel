@@ -7,20 +7,15 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.cse40333.satchel.firebaseNodes.Item;
-import com.cse40333.satchel.firebaseNodes.UsersItem;
+import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.firebase.ui.database.FirebaseListAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -48,8 +43,8 @@ public class ItemsFragment extends Fragment {
         ListView itemListView = (ListView) rootView.findViewById(R.id.item_list_list_view);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference mRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid());
-        ListAdapter listAdapter = new FirebaseListAdapter<UsersItem>(getActivity(), UsersItem.class, R.layout.item_list_row, mRef) {
-            protected void populateView(View view, UsersItem item, int position) {
+        ListAdapter listAdapter = new FirebaseListAdapter<UserItem>(getActivity(), UserItem.class, R.layout.item_list_row, mRef) {
+            protected void populateView(View view, UserItem item, int position) {
                 TextView itemName = (TextView) view.findViewById(R.id.item_name);
                 TextView itemOwner = (TextView) view.findViewById(R.id.item_owner);
                 itemName.setText(item.name);
