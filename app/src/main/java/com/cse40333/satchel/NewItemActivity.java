@@ -37,9 +37,6 @@ public class NewItemActivity extends AppCompatActivity {
                 FirebaseDatabase database = FirebaseDatabase.getInstance();
                 // - items
                 DatabaseReference itemsRef = database.getReference("items").push();
-                Map<String, String> itemInfo = new HashMap<String, String>();
-                itemInfo.put("name", itemNameVal);
-                itemInfo.put("owner", mAuth.getCurrentUser().getUid());
                 itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), "[path/to/file]", "[location of the item]"));
                 // - userItems
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(itemsRef.getKey());
