@@ -1,16 +1,27 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.cse40333.pdrumm.tabbedactivityfromscratch.ItemsFragment">
+    tools:context="com.cse40333.satchel.MainActivity">
 
-    <TextView
+    <ListView
+        android:id="@+id/item_list_list_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Items Fragment"
-        android:gravity="center"
-        android:textSize="30dp"
-        android:textStyle="bold"
+        android:layout_height="match_parent" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/add_list_item"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:clickable="true"
+        app:fabSize="normal"
+        app:srcCompat="@drawable/ic_action_name"
+        android:elevation="3dp"
+        app:pressedTranslationZ="6dp"
+        app:rippleColor="#FFF"
+        android:layout_margin="5dp"
         />
 
 </FrameLayout>

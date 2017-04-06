@@ -33,9 +33,13 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -237,6 +241,13 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
                         mEmailView.setError(task.getException().getMessage());
                         mEmailView.requestFocus();
                     } else {
+                        // Add User to Database
+                        FirebaseDatabase database = FirebaseDatabase.getInstance();
+                        DatabaseReference myRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
+                        Map<String, String> userInfo = new HashMap<String, String>();
+                        userInfo.put("email", mAuth.getCurrentUser().getEmail());
+                        myRef.setValue(userInfo);
+                        // Start the main activity
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(intent);
                         finish();
