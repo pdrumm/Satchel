@@ -28,11 +28,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.cse40333.satchel.firebaseNodes.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -65,6 +67,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
 
     // UI references.
     private AutoCompleteTextView mEmailView;
+    private EditText mDisplayNameView;
     private EditText mPasswordView;
     private EditText mPassword2View;
     private View mProgressView;
@@ -79,6 +82,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
         setContentView(R.layout.activity_sign_up);
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        mDisplayNameView = (EditText) findViewById(R.id.display_name);
         populateAutoComplete();
 
         // attempt signup if user presses enter
@@ -181,7 +185,8 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
         mPasswordView.setError(null);
 
         // Store values at the time of the signup attempt.
-        String email = mEmailView.getText().toString();
+        final String email = mEmailView.getText().toString();
+        final String displayName = mDisplayNameView.getText().toString();
         String password = mPasswordView.getText().toString();
         String password2 = mPassword2View.getText().toString();
 
@@ -241,12 +246,14 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
                         mEmailView.setError(task.getException().getMessage());
                         mEmailView.requestFocus();
                     } else {
+                        // Update user's display name
+                        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                .setDisplayName(displayName).build();
+                        mAuth.getCurrentUser().updateProfile(profileUpdates);
                         // Add User to Database
                         FirebaseDatabase database = FirebaseDatabase.getInstance();
                         DatabaseReference myRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
-                        Map<String, String> userInfo = new HashMap<String, String>();
-                        userInfo.put("email", mAuth.getCurrentUser().getEmail());
-                        myRef.setValue(userInfo);
+                        myRef.setValue(new User(email, displayName));
                         // Start the main activity
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(intent);

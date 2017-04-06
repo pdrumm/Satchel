@@ -10,9 +10,7 @@ public class UsersItem {
     public String thumbnailPath;
     public boolean favorite;
 
-    public UsersItem() {
-        // Default constructor required for calls to DataSnapshot.getValue(User.class)
-    }
+    public UsersItem() {}
 
     public UsersItem(String name, String ownerName, String thumbnailPath, boolean favorite) {
         this.name = name;

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 
+import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.UsersItem;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
@@ -39,10 +40,10 @@ public class NewItemActivity extends AppCompatActivity {
                 Map<String, String> itemInfo = new HashMap<String, String>();
                 itemInfo.put("name", itemNameVal);
                 itemInfo.put("owner", mAuth.getCurrentUser().getUid());
-                itemsRef.setValue(itemInfo);
+                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), "[path/to/file]", "[location of the item]"));
                 // - userItems
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(itemsRef.getKey());
-                userItemsRef.setValue(new UsersItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), "path", false));
+                userItemsRef.setValue(new UsersItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), "[path/to/file]", false));
                 // Return to Items list
                 finish();
             }
