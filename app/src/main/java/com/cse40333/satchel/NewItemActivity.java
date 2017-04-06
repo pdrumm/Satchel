@@ -1,13 +1,9 @@
 package com.cse40333.satchel;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,14 +13,17 @@ import android.widget.EditText;
 
 import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.UserItem;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
-
-import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
-import static android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
 
 public class NewItemActivity extends AppCompatActivity {
 
@@ -33,12 +32,15 @@ public class NewItemActivity extends AppCompatActivity {
 
     // Firebase references
     private FirebaseAuth mAuth;
+    private StorageReference mStorageRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_item);
+        // Instantiate Firebase
         mAuth = FirebaseAuth.getInstance();
+        mStorageRef = FirebaseStorage.getInstance().getReference();
 
         // Add item thumbnail
         View.OnClickListener addThumbnailClick = new View.OnClickListener() {
@@ -58,16 +60,39 @@ public class NewItemActivity extends AppCompatActivity {
                 // Retrieve form data
                 EditText itemName = (EditText) findViewById(R.id.item_name);
                 String itemNameVal = itemName.getText().toString();
+
                 // Submit new item data to Firebase
                 FirebaseDatabase database = FirebaseDatabase.getInstance();
                 // - items
                 DatabaseReference itemsRef = database.getReference("items").push();
-                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), "[path/to/file]", "[location of the item]"));
+                String newItemKey = itemsRef.getKey();
+                String thumbnailPath = (imageSelector.imageUri == null ? "default" : newItemKey) + "/thumbnail.jpg";
+                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, "[location of the item]"));
                 // - userItems
-                DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(itemsRef.getKey());
-                userItemsRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), "[path/to/file]", false));
-                // Return to Items list
-                finish();
+                DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);
+                userItemsRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
+                // - Storage
+                StorageReference thumbnailRef = mStorageRef.child(thumbnailPath);
+                thumbnailRef.putFile(imageSelector.imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        // Get a URL to the uploaded content
+                        @SuppressWarnings("VisibleForTests")
+                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        // Handle unsuccessful uploads
+                        // ...
+                    }
+                }).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                        // Return to Items list
+                        finish();
+                    }
+                });
             }
         };
         FloatingActionButton submitItemFab = (FloatingActionButton) findViewById(R.id.submit_new_item);

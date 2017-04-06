@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.widget.ImageView;
 
 import java.io.File;
@@ -18,6 +19,23 @@ import static android.app.Activity.RESULT_OK;
 import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
 import static android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
 
+/*
+In order for the ImageSelector to work properly, you must override the
+onActivityResult and onRequestPermissionsResult of the current Activity
+as follows:
+
+    ImageSelector imageSelector;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        imageSelector.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        imageSelector.onActivityResult(requestCode, resultCode, data);
+    }
+ */
 public class ImageSelector {
 
     private static final int REQUEST_CAMERA = 0, SELECT_FILE = 1;
@@ -26,6 +44,7 @@ public class ImageSelector {
     private String userChoosenTask;
     private Activity activity;
     private int imageViewId;
+    public Uri imageUri;
 
     /*
     Args:
@@ -94,7 +113,7 @@ public class ImageSelector {
     }
 
     private void cameraIntent() {
-        String filename = "test.jpg";
+        String filename = "thumbnail.jpg";
         File imagePath = new File(activity.getApplicationContext().getFilesDir(), "images");
         if (!imagePath.exists()) imagePath.mkdirs();
         OUTPUT = new File(imagePath, filename);
@@ -123,6 +142,7 @@ public class ImageSelector {
         final Uri outputUri = FileProvider.getUriForFile(activity, AUTHORITY, OUTPUT);
         ImageView imgView = (ImageView) activity.findViewById(this.imageViewId);
         imgView.setImageURI(outputUri);
+        this.imageUri = outputUri;
     }
 
     private void onSelectFromGalleryResult(Intent data) {
@@ -134,8 +154,8 @@ public class ImageSelector {
                 e.printStackTrace();
             }
         }
-
         ImageView imgView = (ImageView) activity.findViewById(this.imageViewId);
         imgView.setImageBitmap(bm);
+        this.imageUri = data.getData();
     }
 }

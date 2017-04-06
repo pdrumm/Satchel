@@ -1,21 +1,33 @@
 package com.cse40333.satchel;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.firebase.ui.database.FirebaseListAdapter;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import java.io.File;
+import java.io.IOException;
 
 
 /**
@@ -25,6 +37,7 @@ public class ItemsFragment extends Fragment {
 
     // Firebase references
     private FirebaseAuth mAuth;
+    private StorageReference mStorageRef;
 
     public ItemsFragment() {
         // Required empty public constructor
@@ -33,8 +46,9 @@ public class ItemsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Get current user
+        // Instantiate Firebase
         mAuth = FirebaseAuth.getInstance();
+        mStorageRef = FirebaseStorage.getInstance().getReference();
 
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_items, container, false);
@@ -45,6 +59,29 @@ public class ItemsFragment extends Fragment {
         DatabaseReference mRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid());
         ListAdapter listAdapter = new FirebaseListAdapter<UserItem>(getActivity(), UserItem.class, R.layout.item_list_row, mRef) {
             protected void populateView(View view, UserItem item, int position) {
+                // Get the thumbnail
+                try {
+                    final View listView = view;
+                    StorageReference thumbnailRef = mStorageRef.child(item.thumbnailPath);
+                    final File localFile = File.createTempFile("thumbnail", "jpg");
+                    thumbnailRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                            // Successfully downloaded data to local file
+                            ImageView itemThumbnail = (ImageView) listView.findViewById(R.id.item_image);
+                            itemThumbnail.setImageBitmap(BitmapFactory.decodeFile(localFile.getAbsolutePath()));
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            // Handle failed download
+                            // ...
+                        }
+                    });
+                } catch (IOException e) {
+                    // Failed to create new local file
+                }
+                // Set text fields
                 TextView itemName = (TextView) view.findViewById(R.id.item_name);
                 TextView itemOwner = (TextView) view.findViewById(R.id.item_owner);
                 itemName.setText(item.name);
