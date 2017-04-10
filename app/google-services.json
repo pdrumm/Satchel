@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "80291445503",
+    "firebase_url": "https://satchel-3b414.firebaseio.com",
+    "project_id": "satchel-3b414",
+    "storage_bucket": "satchel-3b414.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:80291445503:android:bbfc32b054eb2554",
+        "android_client_info": {
+          "package_name": "com.cse40333.satchel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "80291445503-sr2c0msfd78fjc388skfbetnk5k88ef9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cse40333.satchel",
+            "certificate_hash": "bef662e8575450186417c4e76d0bfd3d329dec87"
+          }
+        },
+        {
+          "client_id": "80291445503-hfh8ab88b7p8iin1jjn12pv2fa6jp80b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCG4reenZ7p4fVUTeAjo6M9Lu_JcRmtGHo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "80291445503-hfh8ab88b7p8iin1jjn12pv2fa6jp80b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
