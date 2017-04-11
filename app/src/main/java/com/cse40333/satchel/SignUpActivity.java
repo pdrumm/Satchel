@@ -70,8 +70,8 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
     private EditText mDisplayNameView;
     private EditText mPasswordView;
     private EditText mPassword2View;
-    private View mProgressView;
-    private View mSignUpFormView;
+
+    private Progress progress;
 
     // Firebase references
     private FirebaseAuth mAuth;
@@ -108,8 +108,9 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
             }
         });
 
-        mSignUpFormView = findViewById(R.id.signup_form);
-        mProgressView = findViewById(R.id.signup_progress);
+        View mSignUpFormView = findViewById(R.id.signup_form);
+        View mProgressView = findViewById(R.id.signup_progress);
+        progress = new Progress(getApplicationContext(), mSignUpFormView, mProgressView);
 
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
@@ -226,7 +227,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            showProgress(true);
+            progress.showProgress(true);
 
             // Register with Firebase
             mAuthTask = mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -242,7 +243,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
                         mAuthTask = null;
                         mPasswordView.setText("");
                         mPassword2View.setText("");
-                        showProgress(false);
+                        progress.showProgress(false);
                         mEmailView.setError(task.getException().getMessage());
                         mEmailView.requestFocus();
                     } else {
@@ -273,42 +274,6 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
     private boolean isPasswordValid(String password) {
         //TODO: Replace this with your own logic
         return password.length() > 4;
-    }
-
-    /**
-     * Shows the progress UI and hides the login form.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-            mSignUpFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mSignUpFormView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mSignUpFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
-
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mProgressView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mSignUpFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
     }
 
     @Override

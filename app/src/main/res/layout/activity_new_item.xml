@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_new_item"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.cse40333.satchel.NewItemActivity"
@@ -13,6 +14,11 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     >
+
+    <!-- Add item progress -->
+    <include
+        android:id="@+id/new_item_progress"
+        layout="@layout/progressbar_layout"/>
 
     <ScrollView
         android:id="@+id/new_item_form_scroll"
@@ -61,7 +67,6 @@
                         android:id="@+id/item_thumbnail"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        app:srcCompat="@drawable/ic_add_photo_light"
                         />
                 </FrameLayout>
 

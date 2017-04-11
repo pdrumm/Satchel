@@ -34,5 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
         com.google.firebase.auth.FirebaseAuth mAuth = com.google.firebase.auth.FirebaseAuth.getInstance();
         android.util.Log.d("fb", mAuth.getCurrentUser().getEmail());
+
     }
+
 }

@@ -13,13 +13,9 @@
     >
 
 <!-- Sign up/login progress -->
-<ProgressBar
+<include
     android:id="@+id/signup_progress"
-    style="?android:attr/progressBarStyleLarge"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:visibility="gone" />
+    layout="@layout/progressbar_layout"/>
 
 <ScrollView
     android:id="@+id/signup_form"

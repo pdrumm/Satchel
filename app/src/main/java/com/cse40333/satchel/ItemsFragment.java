@@ -75,7 +75,8 @@ public class ItemsFragment extends Fragment {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
                             // Handle failed download
-                            // ...
+                            ImageView itemThumbnail = (ImageView) listView.findViewById(R.id.item_image);
+                            itemThumbnail.setImageResource(R.drawable.ic_add_photo_light);
                         }
                     });
                 } catch (IOException e) {
