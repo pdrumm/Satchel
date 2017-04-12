@@ -68,25 +68,68 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"></LinearLayout>
                 </FrameLayout>
 
             </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <android.support.design.widget.TextInputLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.8">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/new_follower_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/new_follower"
+                        android:maxLines="1"
+                        android:completionThreshold="1"
+                        android:singleLine="true" />
+
+                </android.support.design.widget.TextInputLayout>
+
+                <Button
+                    android:id="@+id/add_new_follower"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.2"
+                    android:text="Add" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:id="@+id/new_followers_list"
+                >
+
+            </LinearLayout>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/submit_new_item"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
+                android:layout_margin="10dp"
                 android:clickable="true"
-                app:fabSize="normal"
-                app:srcCompat="@drawable/ic_white_check"
                 android:elevation="3dp"
+                app:fabSize="normal"
                 app:pressedTranslationZ="6dp"
                 app:rippleColor="#FFF"
-                android:layout_margin="10dp"
-                />
+                app:srcCompat="@drawable/ic_white_check" />
 
-            </LinearLayout>
+        </LinearLayout>
 
     </ScrollView>
 

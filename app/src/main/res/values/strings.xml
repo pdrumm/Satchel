@@ -23,6 +23,7 @@
 
     <!-- Strings related to New Item -->
     <string name="item_name">Name</string>
+    <string name="new_follower">Follower</string>
     <string name="add_item_thumbnail_btn">Select Photo</string>
 
 </resources>

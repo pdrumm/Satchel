@@ -35,6 +35,8 @@ import java.io.IOException;
  */
 public class ItemsFragment extends Fragment {
 
+    View rootView;
+
     // Firebase references
     private FirebaseAuth mAuth;
     private StorageReference mStorageRef;
@@ -51,8 +53,19 @@ public class ItemsFragment extends Fragment {
         mStorageRef = FirebaseStorage.getInstance().getReference();
 
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_items, container, false);
+        rootView = inflater.inflate(R.layout.fragment_items, container, false);
 
+        // Populate the Items list
+        addPopulateListViewListener();
+
+        // Handler for New Item FAB
+        addNewItemListener();
+
+        // Inflate the layout for this fragment
+        return rootView;
+    }
+
+    private void addPopulateListViewListener() {
         // Create an adapter for the list of items and attach it to the ListView
         ListView itemListView = (ListView) rootView.findViewById(R.id.item_list_list_view);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -60,8 +73,8 @@ public class ItemsFragment extends Fragment {
         ListAdapter listAdapter = new FirebaseListAdapter<UserItem>(getActivity(), UserItem.class, R.layout.item_list_row, mRef) {
             protected void populateView(View view, UserItem item, int position) {
                 // Get the thumbnail
+                final View listView = view;
                 try {
-                    final View listView = view;
                     StorageReference thumbnailRef = mStorageRef.child(item.thumbnailPath);
                     final File localFile = File.createTempFile("thumbnail", "jpg");
                     thumbnailRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
@@ -81,6 +94,8 @@ public class ItemsFragment extends Fragment {
                     });
                 } catch (IOException e) {
                     // Failed to create new local file
+                    ImageView itemThumbnail = (ImageView) listView.findViewById(R.id.item_image);
+                    itemThumbnail.setImageResource(R.drawable.ic_add_photo_light);
                 }
                 // Set text fields
                 TextView itemName = (TextView) view.findViewById(R.id.item_name);
@@ -90,8 +105,9 @@ public class ItemsFragment extends Fragment {
             }
         };
         itemListView.setAdapter(listAdapter);
+    }
 
-        // Handler for New Item FAB
+    private void addNewItemListener() {
         View.OnClickListener newItemClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,9 +117,5 @@ public class ItemsFragment extends Fragment {
         };
         FloatingActionButton newItemFab = (FloatingActionButton) rootView.findViewById(R.id.add_list_item);
         newItemFab.setOnClickListener(newItemClick);
-
-        // Inflate the layout for this fragment
-        return rootView;
     }
-
 }
