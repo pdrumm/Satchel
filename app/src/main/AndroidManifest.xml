@@ -27,6 +27,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".NewItemActivity"></activity>
+        <activity android:name=".ConversationActivity"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
