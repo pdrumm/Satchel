@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:padding="7dip"
+    android:padding="5dip"
     >
 
     <LinearLayout android:id="@+id/thumbnail"
@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:padding="3dip"
         android:layout_alignParentLeft="true"
-        android:layout_marginRight="5dip">
+        android:layout_marginRight="7dip">
 
         <ImageView
             android:id="@+id/item_image"
@@ -28,13 +28,13 @@
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/thumbnail"
         android:layout_toRightOf="@id/thumbnail"
-        android:text="TextView"
+        android:text="Item Name"
         android:textSize="15dip"
         android:textStyle="bold"
         />
 
     <TextView
-        android:id="@+id/item_owner"
+        android:id="@+id/feed_timestamp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
@@ -43,6 +43,40 @@
         android:layout_marginRight="5dip"
         android:textSize="10dip"
         android:textStyle="bold"
-        android:text="TextView" />
+        android:text="Timestamp" />
+
+    <TextView
+        android:id="@+id/feed_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/item_name"
+        android:layout_alignBottom="@+id/thumbnail"
+        android:text="Message Text"
+        android:textSize="15dip"
+        android:textStyle="bold"
+        />
+
+    <TextView
+        android:id="@+id/feed_user_preface"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/feed_message"
+        android:layout_toRightOf="@id/feed_message"
+        android:layout_marginLeft="5dp"
+        android:text="- by "
+        android:textSize="15dip"
+        android:textStyle="bold"
+        />
+
+    <TextView
+        android:id="@+id/feed_user"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/feed_message"
+        android:layout_toRightOf="@id/feed_user_preface"
+        android:text="User"
+        android:textSize="15dip"
+        android:textStyle="bold"
+        />
 
 </RelativeLayout>

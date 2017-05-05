@@ -28,6 +28,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -115,14 +116,21 @@ public class NewItemActivity extends AppCompatActivity {
                 String newItemKey = itemsRef.getKey();
                 String thumbnailPath = (imageSelector.imageUri == null ? "default" : newItemKey) + "/thumbnail.jpg";
                 itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, "[location of the item]", newFollowerAdapter.followerIds));
-                // - userItems
-                //   + curr user
+                // Current user's userItem & feed
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);
                 userItemsRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
-                //   + followers
+                Long tsLong = System.currentTimeMillis();
+                String ts = tsLong.toString();
+                DatabaseReference feedRef = database.getReference("feed").child(mAuth.getCurrentUser().getUid()).push();
+                feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Created"));
+                // - Followers userItems & feed
                 for (String userId : newFollowerAdapter.followerIds) {
+                    // userItems
                     DatabaseReference followerRef = database.getReference("userItems").child(userId).child(newItemKey);
                     followerRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
+                    // - feed
+                    feedRef = database.getReference("feed").child(userId).push();
+                    feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Shared with you"));
                 }
                 // - Storage
                 StorageReference thumbnailRef = mStorageRef.child(thumbnailPath);
