@@ -15,13 +15,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,7 +61,6 @@ public class NewItemActivity extends AppCompatActivity {
     private Progress progress;
 
     // Keep track of the followers added
-    ArrayList<String> followerIds;
     NewFollowerAdapter newFollowerAdapter;
 
     @Override
@@ -81,65 +83,8 @@ public class NewItemActivity extends AppCompatActivity {
         View mProgressView = findViewById(R.id.new_item_progress);
         progress = new Progress(getApplicationContext(), mNewItemFormView, mProgressView);
 
-        // Add new follower
-        View.OnClickListener newFollowerClick = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Get new follower's name
-                AutoCompleteTextView followerView = (AutoCompleteTextView) findViewById(R.id.new_follower_name);
-                String followerName =  followerView.getText().toString();
-                // Inflate a new layout row
-                LayoutInflater layoutInflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                View newFollowerRow = layoutInflater.inflate(R.layout.new_follower_list_row, null);
-                // fill in any details dynamically here
-                TextView textView = (TextView) newFollowerRow.findViewById(R.id.follower_name_row);
-                textView.setText(followerName);
-                // insert into LinearLayout
-                ViewGroup followersList = (ViewGroup) findViewById(R.id.new_followers_list);
-                ViewGroup.LayoutParams lparams = new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                followersList.addView(newFollowerRow, 0, lparams);
-            }
-        };
-        Button newFollowerBtn = (Button) findViewById(R.id.add_new_follower);
-        newFollowerBtn.setOnClickListener(newFollowerClick);
-
-        // Autocomplete
-        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-        //Create a new ArrayAdapter with your context and the simple layout for the dropdown menu provided by Android
-        final ArrayList<String[]> users = new ArrayList<>();
-        //Child the root before all the push() keys are found and add a ValueEventListener()
-        database.child("users").orderByChild("displayName").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                //Basically, this says "For each DataSnapshot *Data* in dataSnapshot, do what's inside the method.
-                for (DataSnapshot suggestionSnapshot : dataSnapshot.getChildren()){
-                    //Get the suggestion by childing the key of the string you want to get.
-                    String uid = suggestionSnapshot.getKey();
-                    String displayName = suggestionSnapshot.child("displayName").getValue(String.class);
-                    String email = suggestionSnapshot.child("email").getValue(String.class);
-                    //Add the retrieved string to the list
-                    String[] user = {uid, displayName, email};
-                    users.add(user);
-                }
-                newFollowerAdapter = new NewFollowerAdapter(getApplicationContext(), android.R.layout.simple_list_item_2, users);
-                AutoCompleteTextView ACTV = (AutoCompleteTextView) findViewById(R.id.new_follower_name);
-                ACTV.setAdapter(newFollowerAdapter);
-                followerIds = new ArrayList<String>(); // instantiate
-                ACTV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        String userId = ((TextView)view.findViewWithTag("userId")).getText().toString();
-                        followerIds.add(userId);
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        // Initialize Autocomplete field and add listener to it
+        initFollowerAutocomplete();
 
     }
 
@@ -169,13 +114,13 @@ public class NewItemActivity extends AppCompatActivity {
                 DatabaseReference itemsRef = database.getReference("items").push();
                 String newItemKey = itemsRef.getKey();
                 String thumbnailPath = (imageSelector.imageUri == null ? "default" : newItemKey) + "/thumbnail.jpg";
-                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, "[location of the item]", followerIds));
+                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, "[location of the item]", newFollowerAdapter.followerIds));
                 // - userItems
                 //   + curr user
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);
                 userItemsRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
                 //   + followers
-                for (String userId : followerIds) {
+                for (String userId : newFollowerAdapter.followerIds) {
                     DatabaseReference followerRef = database.getReference("userItems").child(userId).child(newItemKey);
                     followerRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
                 }
@@ -215,6 +160,86 @@ public class NewItemActivity extends AppCompatActivity {
         };
         Button addThumbnailBtn = (Button) findViewById(R.id.add_item_thumbnail);
         addThumbnailBtn.setOnClickListener(addThumbnailClick);
+    }
+
+    private void initFollowerAutocomplete() {
+
+        /*
+         * Init Autocomplete Field
+         */
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+        final ArrayList<String[]> users = new ArrayList<>();
+        // Query the list of all users and add them to an array.
+        // This array will be the base set for the autocomplete field of followers.
+        database.child("users").orderByChild("displayName").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // build an array of all users' info
+                for (DataSnapshot suggestionSnapshot : dataSnapshot.getChildren()){
+                    //Get the suggestion by childing the key of the string you want to get.
+                    String uid = suggestionSnapshot.getKey();
+                    String displayName = suggestionSnapshot.child("displayName").getValue(String.class);
+                    String email = suggestionSnapshot.child("email").getValue(String.class);
+                    //Add the retrieved string to the list
+                    String[] user = {uid, displayName, email};
+                    users.add(user);
+                }
+                // Set the autocomplete values
+                newFollowerAdapter = new NewFollowerAdapter(getApplicationContext(), android.R.layout.simple_list_item_2, users);
+                AutoCompleteTextView ACTV = (AutoCompleteTextView) findViewById(R.id.new_follower_name);
+                ACTV.setAdapter(newFollowerAdapter);
+
+                /*
+                 * When the user selects a follower, add them to the list
+                 */
+                ACTV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        // add new follower to the maintained list of followers
+                        String userId = ((TextView)view.findViewWithTag("userId")).getText().toString();
+                        newFollowerAdapter.followerIds.add(userId);
+                        // clear value from text field
+                        AutoCompleteTextView followerView = (AutoCompleteTextView) findViewById(R.id.new_follower_name);
+                        followerView.setText("");
+                        /* add list element to gui */
+                        // Get new follower's name
+                        String followerName = ((TextView)view.findViewById(android.R.id.text1)).getText().toString();
+                        // Inflate a new layout row
+                        LayoutInflater layoutInflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                        View newFollowerRow = layoutInflater.inflate(R.layout.new_follower_list_row, null);
+                        // fill in any details dynamically here
+                        TextView textView = (TextView) newFollowerRow.findViewById(R.id.follower_name_row);
+                        textView.setText(followerName);
+                        TextView idTextView = (TextView) newFollowerRow.findViewById(R.id.follower_id);
+                        idTextView.setText(userId);
+                        idTextView.setVisibility(View.GONE);
+                        // add listener for button to remove the follower
+                        ImageButton removeFollowerBtn = (ImageButton) newFollowerRow.findViewById(R.id.remove_follower_row);
+                        removeFollowerBtn.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                // Remove follower from list
+                                RelativeLayout removedRow = (RelativeLayout) v.getParent();
+                                String removedFollowerId = ((TextView)removedRow.findViewById(R.id.follower_id)).getText().toString();
+                                ((LinearLayout)removedRow.getParent()).removeView(removedRow);
+                                // Remove follower from maintained array
+                                newFollowerAdapter.followerIds.remove(removedFollowerId);
+                            }
+                        });
+                        // insert into LinearLayout
+                        ViewGroup followersList = (ViewGroup) findViewById(R.id.new_followers_list);
+                        ViewGroup.LayoutParams lparams = new ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        followersList.addView(newFollowerRow, 0, lparams);
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
 }

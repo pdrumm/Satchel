@@ -1,6 +1,7 @@
 package com.cse40333.satchel;
 
 import android.content.Context;
+import android.support.annotation.BoolRes;
 import android.support.v7.graphics.Palette;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,6 +14,8 @@ import android.widget.TextView;
 import android.widget.TwoLineListItem;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NewFollowerAdapter extends ArrayAdapter<String[]> {
 
@@ -20,13 +23,14 @@ public class NewFollowerAdapter extends ArrayAdapter<String[]> {
     private ArrayList<String[]> itemsAll;
     private ArrayList<String[]> suggestions;
     private int viewResourceId;
-    private ArrayList<String> userIds;
+    public ArrayList<String> followerIds;
 
     NewFollowerAdapter(Context context, int viewResourceId, ArrayList<String[]> followers) {
         super(context, viewResourceId, followers);
         this.items = followers;
         this.itemsAll = (ArrayList<String[]>) items.clone();
         this.suggestions = new ArrayList<String[]>();
+        this.followerIds = new ArrayList<>();
         this.viewResourceId = viewResourceId;
     }
 
@@ -67,8 +71,10 @@ public class NewFollowerAdapter extends ArrayAdapter<String[]> {
             if (constraint != null) {
                 suggestions.clear();
                 for (String[] user : itemsAll) {
-                    if (user[1].toLowerCase()
-                            .startsWith(constraint.toString().toLowerCase())) {
+                    if ( (!followerIds.contains(user[0])) && (
+                            user[1].toLowerCase().contains(constraint.toString().toLowerCase())
+                            || user[2].toLowerCase().contains(constraint.toString().toLowerCase())
+                       )) {
                         suggestions.add(user);
                     }
                 }

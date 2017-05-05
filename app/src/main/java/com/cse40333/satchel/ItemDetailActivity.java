@@ -107,6 +107,7 @@ public class ItemDetailActivity extends AppCompatActivity {
     }
 
     private void addFollowersToList(ArrayList<String> followerIds) {
+        if (followerIds == null) { return; }
         // Get list inflator
         final LinearLayout itemFollowers = (LinearLayout) findViewById(R.id.itemFollowersList);
         final LayoutInflater linf = LayoutInflater.from(ItemDetailActivity.this);

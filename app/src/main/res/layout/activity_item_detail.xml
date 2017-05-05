@@ -86,7 +86,7 @@
             android:id="@+id/itemFollowersLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TextView" />
+            android:text="Followers:" />
 
         <com.cse40333.satchel.MaxHeightScrollView
             android:layout_width="match_parent"

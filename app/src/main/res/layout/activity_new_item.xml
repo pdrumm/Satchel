@@ -98,13 +98,6 @@
 
                 </android.support.design.widget.TextInputLayout>
 
-                <Button
-                    android:id="@+id/add_new_follower"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.2"
-                    android:text="Add" />
-
             </LinearLayout>
 
             <LinearLayout
