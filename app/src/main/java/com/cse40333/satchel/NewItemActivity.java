@@ -169,7 +169,7 @@ public class NewItemActivity extends AppCompatActivity {
                 DatabaseReference itemsRef = database.getReference("items").push();
                 String newItemKey = itemsRef.getKey();
                 String thumbnailPath = (imageSelector.imageUri == null ? "default" : newItemKey) + "/thumbnail.jpg";
-                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, "[location of the item]"));
+                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, "[location of the item]", followerIds));
                 // - userItems
                 //   + curr user
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);

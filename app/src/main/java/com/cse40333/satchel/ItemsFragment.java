@@ -7,9 +7,11 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -58,6 +60,9 @@ public class ItemsFragment extends Fragment {
         // Populate the Items list
         addPopulateListViewListener();
 
+        // Add listeners to each item in list
+        addItemListListener();
+
         // Handler for New Item FAB
         addNewItemListener();
 
@@ -97,6 +102,8 @@ public class ItemsFragment extends Fragment {
                     ImageView itemThumbnail = (ImageView) listView.findViewById(R.id.item_image);
                     itemThumbnail.setImageResource(R.drawable.ic_add_photo_light);
                 }
+                // Set hidden field
+                view.setTag(getRef(position).getKey());
                 // Set text fields
                 TextView itemName = (TextView) view.findViewById(R.id.item_name);
                 TextView itemOwner = (TextView) view.findViewById(R.id.item_owner);
@@ -105,6 +112,20 @@ public class ItemsFragment extends Fragment {
             }
         };
         itemListView.setAdapter(listAdapter);
+    }
+
+    private void addItemListListener() {
+        // Create an event listener for each row in the schedule
+        ListView itemListView = (ListView) rootView.findViewById(R.id.item_list_list_view);
+        AdapterView.OnItemClickListener itemClickListener = new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(getContext(), ItemDetailActivity.class);
+                intent.putExtra("itemId", view.getTag().toString());
+                startActivity(intent);
+            }
+        };
+        itemListView.setOnItemClickListener(itemClickListener);
     }
 
     private void addNewItemListener() {
