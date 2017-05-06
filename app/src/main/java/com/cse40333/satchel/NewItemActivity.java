@@ -25,6 +25,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,6 +54,7 @@ public class NewItemActivity extends AppCompatActivity {
 
     // Add photo
     private ImageSelector imageSelector;
+    private ImageSelector locationImageSelector;
 
     // Firebase references
     private FirebaseAuth mAuth;
@@ -76,6 +78,10 @@ public class NewItemActivity extends AppCompatActivity {
         // Add item thumbnail
         addNewImageListener();
 
+        // Add item location
+        initLocationSpinner();
+        addLocationListener();
+
         // Submit new item
         addSubmitItemListener();
 
@@ -96,7 +102,10 @@ public class NewItemActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        imageSelector.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == imageSelector.SELECT_FILE || requestCode == imageSelector.REQUEST_CAMERA)
+            imageSelector.onActivityResult(requestCode, resultCode, data);
+        else if (requestCode == locationImageSelector.SELECT_FILE || requestCode == locationImageSelector.REQUEST_CAMERA)
+            locationImageSelector.onActivityResult(requestCode, resultCode, data);
     }
 
     private void addSubmitItemListener() {
@@ -115,7 +124,9 @@ public class NewItemActivity extends AppCompatActivity {
                 DatabaseReference itemsRef = database.getReference("items").push();
                 String newItemKey = itemsRef.getKey();
                 String thumbnailPath = (imageSelector.imageUri == null ? "default" : newItemKey) + "/thumbnail.jpg";
-                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, "[location of the item]", newFollowerAdapter.followerIds));
+                String locationType = getLocationType();
+                String locationValue = getLocationValue(locationType, newItemKey);
+                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, locationType, locationValue, newFollowerAdapter.followerIds));
                 // Current user's userItem & feed
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);
                 userItemsRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
@@ -133,6 +144,7 @@ public class NewItemActivity extends AppCompatActivity {
                     feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Shared with you"));
                 }
                 // - Storage
+                //   + thumbnail
                 StorageReference thumbnailRef = mStorageRef.child(thumbnailPath);
                 thumbnailRef.putFile(imageSelector.imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -151,6 +163,11 @@ public class NewItemActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Failed to upload image to Firebase", Toast.LENGTH_SHORT).show();
                     }
                 });
+                //   + location
+                if ( locationType.equals(LOCATION_IMAGE) ) {
+                    StorageReference locationRef = mStorageRef.child(locationValue);
+                    locationRef.putFile(locationImageSelector.imageUri);
+                }
             }
         };
         // Get FAB and add listener
@@ -159,15 +176,115 @@ public class NewItemActivity extends AppCompatActivity {
     }
 
     private void addNewImageListener() {
+        imageSelector = new ImageSelector(NewItemActivity.this, R.id.item_thumbnail, "thumbnail");
         View.OnClickListener addThumbnailClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                imageSelector = new ImageSelector(NewItemActivity.this, R.id.item_thumbnail);
                 imageSelector.selectImage();
             }
         };
         Button addThumbnailBtn = (Button) findViewById(R.id.add_item_thumbnail);
         addThumbnailBtn.setOnClickListener(addThumbnailClick);
+    }
+
+    private void initLocationSpinner() {
+        Spinner spinner = (Spinner) findViewById(R.id.location_type_spinner);
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.location_types, android.R.layout.simple_spinner_item);
+        // Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        spinner.setAdapter(adapter);
+        // Add onclick listener
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Get different location types
+                String[] location_types = getResources().getStringArray(R.array.location_types);
+                // Get the selected location type
+                TextView tv = (TextView) view.findViewById(android.R.id.text1);
+                String selected_location = tv.getText().toString();
+                // Get the different location input views from the layout
+                RelativeLayout location_text = (RelativeLayout) findViewById(R.id.location_type_text);
+                RelativeLayout location_image = (RelativeLayout) findViewById(R.id.location_type_image);
+                RelativeLayout location_map = (RelativeLayout) findViewById(R.id.location_type_gps);
+                // Show/hide appropriate views
+                if (selected_location.equals(location_types[0])) {
+                    // textual description
+                    location_text.setVisibility(View.VISIBLE);
+                    location_image.setVisibility(View.GONE);
+                    location_map.setVisibility(View.GONE);
+                } else if (selected_location.equals(location_types[1])) {
+                    // image
+                    location_text.setVisibility(View.GONE);
+                    location_image.setVisibility(View.VISIBLE);
+                    location_map.setVisibility(View.GONE);
+                }  else if (selected_location.equals(location_types[2])) {
+                    // map
+                    location_text.setVisibility(View.GONE);
+                    location_image.setVisibility(View.GONE);
+                    location_map.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+    }
+
+    private void addLocationListener() {
+        locationImageSelector = new ImageSelector(NewItemActivity.this, R.id.item_location_image, "location", 3, 4);
+        View.OnClickListener addThumbnailClick = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                locationImageSelector.selectImage();
+            }
+        };
+        Button addThumbnailBtn = (Button) findViewById(R.id.add_item_location_image);
+        addThumbnailBtn.setOnClickListener(addThumbnailClick);
+    }
+
+    final private String LOCATION_TEXT = "text";
+    final private String LOCATION_IMAGE = "image";
+    final private String LOCATION_MAP = "map";
+
+    private String getLocationType() {
+        // Get possible location views
+        RelativeLayout location_text = (RelativeLayout) findViewById(R.id.location_type_text);
+        RelativeLayout location_image = (RelativeLayout) findViewById(R.id.location_type_image);
+        RelativeLayout location_map = (RelativeLayout) findViewById(R.id.location_type_gps);
+        // determine which view is visible
+        if (location_text.getVisibility() == View.VISIBLE) {
+            return LOCATION_TEXT;
+        } else if (location_image.getVisibility() == View.VISIBLE) {
+            return LOCATION_IMAGE;
+        } else if (location_map.getVisibility() == View.VISIBLE) {
+            return LOCATION_MAP;
+        }
+        return "none";
+    }
+
+    private String getLocationValue(String locationType, String newItemKey) {
+        RelativeLayout locationLayout;
+        String locationVal = "none";
+        switch (locationType) {
+            case LOCATION_TEXT:
+                locationLayout = (RelativeLayout) findViewById(R.id.location_type_text);
+                TextView tv = (TextView) locationLayout.findViewById(R.id.item_location_text);
+                locationVal = tv.getText().toString();
+                break;
+            case LOCATION_IMAGE:
+                locationLayout = (RelativeLayout) findViewById(R.id.location_type_image);
+                locationVal = (locationImageSelector.imageUri == null ? "default" : newItemKey) + "/location.jpg";
+                break;
+            case LOCATION_MAP:
+                locationLayout = (RelativeLayout) findViewById(R.id.location_type_gps);
+                break;
+        }
+        return locationVal;
     }
 
     private void initFollowerAutocomplete() {

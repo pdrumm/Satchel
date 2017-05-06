@@ -38,22 +38,31 @@ as follows:
  */
 public class ImageSelector {
 
-    private static final int REQUEST_CAMERA = 0, SELECT_FILE = 1;
+    public int REQUEST_CAMERA = 0, SELECT_FILE = 1;
     private File OUTPUT;
     private String AUTHORITY = "com.cse40333.satchel.fileprovider";
     private String userChoosenTask;
     private Activity activity;
     private int imageViewId;
     public Uri imageUri;
+    private String tempFileName = "default";
 
     /*
     Args:
      - activity: the current Activity (used for context)
      - imageViewId: the R.id of the ImageView to update with the new image
      */
-    public ImageSelector(Activity activity, int imageViewId) {
+    public ImageSelector(Activity activity, int imageViewId, String tempFileName) {
         this.activity = activity;
         this.imageViewId = imageViewId;
+        this.tempFileName = tempFileName;
+    }
+    public ImageSelector(Activity activity, int imageViewId, String tempFileName, int request_camera, int select_file) {
+        this.activity = activity;
+        this.imageViewId = imageViewId;
+        this.tempFileName = tempFileName;
+        this.REQUEST_CAMERA = request_camera;
+        this.SELECT_FILE = select_file;
     }
 
     // ~@Override
@@ -113,7 +122,7 @@ public class ImageSelector {
     }
 
     private void cameraIntent() {
-        String filename = "thumbnail.jpg";
+        String filename = this.tempFileName + ".jpg";
         File imagePath = new File(activity.getApplicationContext().getFilesDir(), "images");
         if (!imagePath.exists()) imagePath.mkdirs();
         OUTPUT = new File(imagePath, filename);

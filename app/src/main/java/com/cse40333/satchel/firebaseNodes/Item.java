@@ -11,22 +11,25 @@ public class Item {
     public String ownerId;
     public ArrayList<String> followers;
     public String thumbnailPath;
-    public String location;
+    public String locationType;
+    public String locationValue;
 
     public Item() {}
 
-    public Item(String name, String ownerId, String thumbnailPath, String location) {
+    public Item(String name, String ownerId, String thumbnailPath, String locationType, String locationValue) {
         this.name = name;
         this.ownerId = ownerId;
         this.thumbnailPath = thumbnailPath;
-        this.location = location;
+        this.locationType = locationType;
+        this.locationValue = locationValue;
     }
 
-    public Item(String name, String ownerId, String thumbnailPath, String location, ArrayList<String> followers) {
+    public Item(String name, String ownerId, String thumbnailPath, String locationType, String locationValue, ArrayList<String> followers) {
         this.name = name;
         this.ownerId = ownerId;
         this.thumbnailPath = thumbnailPath;
-        this.location = location;
+        this.locationType = locationType;
+        this.locationValue = locationValue;
         this.followers = followers;
     }
 }

@@ -2,6 +2,7 @@ package com.cse40333.satchel;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.cse40333.satchel.firebaseNodes.Item;
@@ -44,6 +46,10 @@ public class ItemDetailActivity extends AppCompatActivity {
     private StorageReference mStorageRef;
     private FirebaseDatabase mDatabase;
 
+    final private String LOCATION_TEXT = "text";
+    final private String LOCATION_IMAGE = "image";
+    final private String LOCATION_MAP = "map";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,7 +80,7 @@ public class ItemDetailActivity extends AppCompatActivity {
                 // This method is called once with the initial value and again
                 // whenever data at this location is updated.
                 Item value = dataSnapshot.getValue(Item.class);
-                setItemImages(value.thumbnailPath);
+                setItemImages(value.thumbnailPath, R.id.itemThumbnail, "thumbnail");
                 setItemDetails(value);
             }
 
@@ -133,10 +139,28 @@ public class ItemDetailActivity extends AppCompatActivity {
     private void setItemDetails(Item item) {
         // get Layout views
         TextView itemNameView = (TextView) findViewById(R.id.itemName);
-        TextView itemLocationView = (TextView) findViewById(R.id.itemLocation);
-        // set view values
+        RelativeLayout itemLocationView = (RelativeLayout) findViewById(R.id.item_location_container);
+        // set item name
         itemNameView.setText(item.name);
-        itemLocationView.setText(item.location);
+        // set item location
+        RelativeLayout locationText = (RelativeLayout) findViewById(R.id.item_location_type_text);
+        RelativeLayout locationImage = (RelativeLayout) findViewById(R.id.item_location_type_image);
+        switch (item.locationType) {
+            case LOCATION_TEXT:
+                locationText.setVisibility(View.VISIBLE);
+                locationImage.setVisibility(View.GONE);
+                TextView tv = (TextView) locationText.findViewById(R.id.item_location_text);
+                tv.setText(item.locationValue);
+                break;
+            case LOCATION_IMAGE:
+                locationText.setVisibility(View.GONE);
+                locationImage.setVisibility(View.VISIBLE);
+                setItemImages(item.locationValue, R.id.item_location_image, "location");
+                break;
+            default:
+                locationText.setVisibility(View.GONE);
+                locationImage.setVisibility(View.GONE);
+        }
         // set followers list
         addFollowersToList(item.followers);
     }
@@ -150,28 +174,33 @@ public class ItemDetailActivity extends AppCompatActivity {
         itemFavoriteView.setChecked(item.favorite);
     }
 
-    private void setItemImages(String path) {
+    private void setItemImages(String path, int imageViewId, String tempFileName) {
+        Log.d("TESTZZ1", path);
+        Log.d("TESTZZ2", String.valueOf(imageViewId));
+        Log.d("TESTZZ3", tempFileName);
+        final int imgViewId = imageViewId;
         try {
             StorageReference thumbnailRef = mStorageRef.child(path);
-            final File localFile = File.createTempFile("thumbnail", "jpg");
+            final File localFile = File.createTempFile(tempFileName, "jpg");
             thumbnailRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     // Successfully downloaded data to local file
-                    ImageView itemThumbnail = (ImageView) findViewById(R.id.itemThumbnail);
+                    ImageView itemThumbnail = (ImageView) findViewById(imgViewId);
                     itemThumbnail.setImageBitmap(BitmapFactory.decodeFile(localFile.getAbsolutePath()));
+                    Log.d("TESTZZ4", "here");
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception exception) {
                     // Handle failed download
-                    ImageView itemThumbnail = (ImageView) findViewById(R.id.itemThumbnail);
+                    ImageView itemThumbnail = (ImageView) findViewById(imgViewId);
                     itemThumbnail.setImageResource(R.drawable.ic_add_photo_light);
                 }
             });
         } catch (IOException e) {
             // Failed to create new local file
-            ImageView itemThumbnail = (ImageView) findViewById(R.id.itemThumbnail);
+            ImageView itemThumbnail = (ImageView) findViewById(imgViewId);
             itemThumbnail.setImageResource(R.drawable.ic_add_photo_light);
         }
     }

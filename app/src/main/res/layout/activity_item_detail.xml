@@ -7,14 +7,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.cse40333.satchel.ItemDetailActivity"
-    android:weightSum="100"
     >
 
     <ImageView
         android:id="@+id/itemThumbnail"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="25"
+        android:layout_height="wrap_content"
         />
 
     <RelativeLayout
@@ -37,6 +35,7 @@
     </RelativeLayout>
 
     <RelativeLayout
+        android:id="@+id/item_location_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -44,17 +43,47 @@
             android:id="@+id/itemLocationLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Location:"
             android:layout_marginRight="5dp"
-            />
+            android:text="Location:" />
 
-        <TextView
-            android:id="@+id/itemLocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="[location]"
+        <RelativeLayout
+            android:id="@+id/item_location_type_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_toEndOf="@+id/itemLocationLabel"
-            />
+            >
+
+            <TextView
+                android:id="@+id/item_location_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[location]" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/item_location_type_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_toEndOf="@id/itemLocationLabel"
+            >
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
+
+                <ImageView
+                    android:id="@+id/item_location_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"></LinearLayout>
+            </FrameLayout>
+        </RelativeLayout>
 
     </RelativeLayout>
 
