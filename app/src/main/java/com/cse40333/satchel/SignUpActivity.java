@@ -250,15 +250,19 @@ public class SignUpActivity extends AppCompatActivity implements LoaderManager.L
                         // Update user's display name
                         UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                 .setDisplayName(displayName).build();
-                        mAuth.getCurrentUser().updateProfile(profileUpdates);
-                        // Add User to Database
-                        FirebaseDatabase database = FirebaseDatabase.getInstance();
-                        DatabaseReference myRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
-                        myRef.setValue(new User(email, displayName));
-                        // Start the main activity
-                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                        startActivity(intent);
-                        finish();
+                        mAuth.getCurrentUser().updateProfile(profileUpdates).addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                // Add User to Database
+                                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                                DatabaseReference myRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
+                                myRef.setValue(new User(email, displayName));
+                                // Start the main activity
+                                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
+                        });
                     }
                 }
             });

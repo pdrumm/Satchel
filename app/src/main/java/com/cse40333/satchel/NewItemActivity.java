@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
+import com.cse40333.satchel.firebaseNodes.User;
 import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -66,6 +67,9 @@ public class NewItemActivity extends AppCompatActivity {
     // Keep track of the followers added
     NewFollowerAdapter newFollowerAdapter;
 
+    // User info
+    private String userDisplayName = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +96,9 @@ public class NewItemActivity extends AppCompatActivity {
 
         // Initialize Autocomplete field and add listener to it
         initFollowerAutocomplete();
+
+        // Get username from database
+        getUserDisplayName();
 
     }
 
@@ -129,19 +136,19 @@ public class NewItemActivity extends AppCompatActivity {
                 itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, locationType, locationValue, newFollowerAdapter.followerIds));
                 // Current user's userItem & feed
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);
-                userItemsRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
+                userItemsRef.setValue(new UserItem(itemNameVal, userDisplayName, thumbnailPath, false));
                 Long tsLong = System.currentTimeMillis();
                 String ts = tsLong.toString();
                 DatabaseReference feedRef = database.getReference("feed").child(mAuth.getCurrentUser().getUid()).push();
-                feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Created"));
+                feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, userDisplayName, ts, "Created"));
                 // - Followers userItems & feed
                 for (String userId : newFollowerAdapter.followerIds) {
                     // userItems
                     DatabaseReference followerRef = database.getReference("userItems").child(userId).child(newItemKey);
-                    followerRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
+                    followerRef.setValue(new UserItem(itemNameVal, userDisplayName, thumbnailPath, false));
                     // - feed
                     feedRef = database.getReference("feed").child(userId).push();
-                    feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Shared with you"));
+                    feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, userDisplayName, ts, "Shared with you"));
                 }
                 // - Storage
                 //   + thumbnail
@@ -358,6 +365,22 @@ public class NewItemActivity extends AppCompatActivity {
                         followersList.addView(newFollowerRow, 0, lparams);
                     }
                 });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void getUserDisplayName() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        final DatabaseReference usersRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                 userDisplayName = dataSnapshot.getValue(User.class).displayName;
             }
 
             @Override
