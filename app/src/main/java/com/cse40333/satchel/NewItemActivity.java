@@ -15,16 +15,21 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -49,6 +54,7 @@ public class NewItemActivity extends AppCompatActivity {
 
     // Add photo
     private ImageSelector imageSelector;
+    private ImageSelector locationImageSelector;
 
     // Firebase references
     private FirebaseAuth mAuth;
@@ -58,7 +64,6 @@ public class NewItemActivity extends AppCompatActivity {
     private Progress progress;
 
     // Keep track of the followers added
-    ArrayList<String> followerIds;
     NewFollowerAdapter newFollowerAdapter;
 
     @Override
@@ -73,6 +78,10 @@ public class NewItemActivity extends AppCompatActivity {
         // Add item thumbnail
         addNewImageListener();
 
+        // Add item location
+        initLocationSpinner();
+        addLocationListener();
+
         // Submit new item
         addSubmitItemListener();
 
@@ -81,65 +90,8 @@ public class NewItemActivity extends AppCompatActivity {
         View mProgressView = findViewById(R.id.new_item_progress);
         progress = new Progress(getApplicationContext(), mNewItemFormView, mProgressView);
 
-        // Add new follower
-        View.OnClickListener newFollowerClick = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Get new follower's name
-                AutoCompleteTextView followerView = (AutoCompleteTextView) findViewById(R.id.new_follower_name);
-                String followerName =  followerView.getText().toString();
-                // Inflate a new layout row
-                LayoutInflater layoutInflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                View newFollowerRow = layoutInflater.inflate(R.layout.new_follower_list_row, null);
-                // fill in any details dynamically here
-                TextView textView = (TextView) newFollowerRow.findViewById(R.id.follower_name_row);
-                textView.setText(followerName);
-                // insert into LinearLayout
-                ViewGroup followersList = (ViewGroup) findViewById(R.id.new_followers_list);
-                ViewGroup.LayoutParams lparams = new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                followersList.addView(newFollowerRow, 0, lparams);
-            }
-        };
-        Button newFollowerBtn = (Button) findViewById(R.id.add_new_follower);
-        newFollowerBtn.setOnClickListener(newFollowerClick);
-
-        // Autocomplete
-        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-        //Create a new ArrayAdapter with your context and the simple layout for the dropdown menu provided by Android
-        final ArrayList<String[]> users = new ArrayList<>();
-        //Child the root before all the push() keys are found and add a ValueEventListener()
-        database.child("users").orderByChild("displayName").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                //Basically, this says "For each DataSnapshot *Data* in dataSnapshot, do what's inside the method.
-                for (DataSnapshot suggestionSnapshot : dataSnapshot.getChildren()){
-                    //Get the suggestion by childing the key of the string you want to get.
-                    String uid = suggestionSnapshot.getKey();
-                    String displayName = suggestionSnapshot.child("displayName").getValue(String.class);
-                    String email = suggestionSnapshot.child("email").getValue(String.class);
-                    //Add the retrieved string to the list
-                    String[] user = {uid, displayName, email};
-                    users.add(user);
-                }
-                newFollowerAdapter = new NewFollowerAdapter(getApplicationContext(), android.R.layout.simple_list_item_2, users);
-                AutoCompleteTextView ACTV = (AutoCompleteTextView) findViewById(R.id.new_follower_name);
-                ACTV.setAdapter(newFollowerAdapter);
-                followerIds = new ArrayList<String>(); // instantiate
-                ACTV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        String userId = ((TextView)view.findViewWithTag("userId")).getText().toString();
-                        followerIds.add(userId);
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        // Initialize Autocomplete field and add listener to it
+        initFollowerAutocomplete();
 
     }
 
@@ -150,7 +102,10 @@ public class NewItemActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        imageSelector.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == imageSelector.SELECT_FILE || requestCode == imageSelector.REQUEST_CAMERA)
+            imageSelector.onActivityResult(requestCode, resultCode, data);
+        else if (requestCode == locationImageSelector.SELECT_FILE || requestCode == locationImageSelector.REQUEST_CAMERA)
+            locationImageSelector.onActivityResult(requestCode, resultCode, data);
     }
 
     private void addSubmitItemListener() {
@@ -169,17 +124,27 @@ public class NewItemActivity extends AppCompatActivity {
                 DatabaseReference itemsRef = database.getReference("items").push();
                 String newItemKey = itemsRef.getKey();
                 String thumbnailPath = (imageSelector.imageUri == null ? "default" : newItemKey) + "/thumbnail.jpg";
-                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, "[location of the item]"));
-                // - userItems
-                //   + curr user
+                String locationType = getLocationType();
+                String locationValue = getLocationValue(locationType, newItemKey);
+                itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, locationType, locationValue, newFollowerAdapter.followerIds));
+                // Current user's userItem & feed
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);
                 userItemsRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
-                //   + followers
-                for (String userId : followerIds) {
+                Long tsLong = System.currentTimeMillis();
+                String ts = tsLong.toString();
+                DatabaseReference feedRef = database.getReference("feed").child(mAuth.getCurrentUser().getUid()).push();
+                feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Created"));
+                // - Followers userItems & feed
+                for (String userId : newFollowerAdapter.followerIds) {
+                    // userItems
                     DatabaseReference followerRef = database.getReference("userItems").child(userId).child(newItemKey);
                     followerRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
+                    // - feed
+                    feedRef = database.getReference("feed").child(userId).push();
+                    feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Shared with you"));
                 }
                 // - Storage
+                //   + thumbnail
                 StorageReference thumbnailRef = mStorageRef.child(thumbnailPath);
                 thumbnailRef.putFile(imageSelector.imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -198,6 +163,11 @@ public class NewItemActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Failed to upload image to Firebase", Toast.LENGTH_SHORT).show();
                     }
                 });
+                //   + location
+                if ( locationType.equals(LOCATION_IMAGE) ) {
+                    StorageReference locationRef = mStorageRef.child(locationValue);
+                    locationRef.putFile(locationImageSelector.imageUri);
+                }
             }
         };
         // Get FAB and add listener
@@ -206,15 +176,195 @@ public class NewItemActivity extends AppCompatActivity {
     }
 
     private void addNewImageListener() {
+        imageSelector = new ImageSelector(NewItemActivity.this, R.id.item_thumbnail, "thumbnail");
         View.OnClickListener addThumbnailClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                imageSelector = new ImageSelector(NewItemActivity.this, R.id.item_thumbnail);
                 imageSelector.selectImage();
             }
         };
         Button addThumbnailBtn = (Button) findViewById(R.id.add_item_thumbnail);
         addThumbnailBtn.setOnClickListener(addThumbnailClick);
+    }
+
+    private void initLocationSpinner() {
+        Spinner spinner = (Spinner) findViewById(R.id.location_type_spinner);
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.location_types, android.R.layout.simple_spinner_item);
+        // Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        spinner.setAdapter(adapter);
+        // Add onclick listener
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Get different location types
+                String[] location_types = getResources().getStringArray(R.array.location_types);
+                // Get the selected location type
+                TextView tv = (TextView) view.findViewById(android.R.id.text1);
+                String selected_location = tv.getText().toString();
+                // Get the different location input views from the layout
+                RelativeLayout location_text = (RelativeLayout) findViewById(R.id.location_type_text);
+                RelativeLayout location_image = (RelativeLayout) findViewById(R.id.location_type_image);
+                RelativeLayout location_map = (RelativeLayout) findViewById(R.id.location_type_gps);
+                // Show/hide appropriate views
+                if (selected_location.equals(location_types[0])) {
+                    // textual description
+                    location_text.setVisibility(View.VISIBLE);
+                    location_image.setVisibility(View.GONE);
+                    location_map.setVisibility(View.GONE);
+                } else if (selected_location.equals(location_types[1])) {
+                    // image
+                    location_text.setVisibility(View.GONE);
+                    location_image.setVisibility(View.VISIBLE);
+                    location_map.setVisibility(View.GONE);
+                }  else if (selected_location.equals(location_types[2])) {
+                    // map
+                    location_text.setVisibility(View.GONE);
+                    location_image.setVisibility(View.GONE);
+                    location_map.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+    }
+
+    private void addLocationListener() {
+        locationImageSelector = new ImageSelector(NewItemActivity.this, R.id.item_location_image, "location", 3, 4);
+        View.OnClickListener addThumbnailClick = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                locationImageSelector.selectImage();
+            }
+        };
+        Button addThumbnailBtn = (Button) findViewById(R.id.add_item_location_image);
+        addThumbnailBtn.setOnClickListener(addThumbnailClick);
+    }
+
+    final private String LOCATION_TEXT = "text";
+    final private String LOCATION_IMAGE = "image";
+    final private String LOCATION_MAP = "map";
+
+    private String getLocationType() {
+        // Get possible location views
+        RelativeLayout location_text = (RelativeLayout) findViewById(R.id.location_type_text);
+        RelativeLayout location_image = (RelativeLayout) findViewById(R.id.location_type_image);
+        RelativeLayout location_map = (RelativeLayout) findViewById(R.id.location_type_gps);
+        // determine which view is visible
+        if (location_text.getVisibility() == View.VISIBLE) {
+            return LOCATION_TEXT;
+        } else if (location_image.getVisibility() == View.VISIBLE) {
+            return LOCATION_IMAGE;
+        } else if (location_map.getVisibility() == View.VISIBLE) {
+            return LOCATION_MAP;
+        }
+        return "none";
+    }
+
+    private String getLocationValue(String locationType, String newItemKey) {
+        RelativeLayout locationLayout;
+        String locationVal = "none";
+        switch (locationType) {
+            case LOCATION_TEXT:
+                locationLayout = (RelativeLayout) findViewById(R.id.location_type_text);
+                TextView tv = (TextView) locationLayout.findViewById(R.id.item_location_text);
+                locationVal = tv.getText().toString();
+                break;
+            case LOCATION_IMAGE:
+                locationLayout = (RelativeLayout) findViewById(R.id.location_type_image);
+                locationVal = (locationImageSelector.imageUri == null ? "default" : newItemKey) + "/location.jpg";
+                break;
+            case LOCATION_MAP:
+                locationLayout = (RelativeLayout) findViewById(R.id.location_type_gps);
+                break;
+        }
+        return locationVal;
+    }
+
+    private void initFollowerAutocomplete() {
+
+        /*
+         * Init Autocomplete Field
+         */
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+        final ArrayList<String[]> users = new ArrayList<>();
+        // Query the list of all users and add them to an array.
+        // This array will be the base set for the autocomplete field of followers.
+        database.child("users").orderByChild("displayName").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // build an array of all users' info
+                for (DataSnapshot suggestionSnapshot : dataSnapshot.getChildren()){
+                    //Get the suggestion by childing the key of the string you want to get.
+                    String uid = suggestionSnapshot.getKey();
+                    String displayName = suggestionSnapshot.child("displayName").getValue(String.class);
+                    String email = suggestionSnapshot.child("email").getValue(String.class);
+                    //Add the retrieved string to the list
+                    String[] user = {uid, displayName, email};
+                    users.add(user);
+                }
+                // Set the autocomplete values
+                newFollowerAdapter = new NewFollowerAdapter(getApplicationContext(), android.R.layout.simple_list_item_2, users);
+                AutoCompleteTextView ACTV = (AutoCompleteTextView) findViewById(R.id.new_follower_name);
+                ACTV.setAdapter(newFollowerAdapter);
+
+                /*
+                 * When the user selects a follower, add them to the list
+                 */
+                ACTV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        // add new follower to the maintained list of followers
+                        String userId = ((TextView)view.findViewWithTag("userId")).getText().toString();
+                        newFollowerAdapter.followerIds.add(userId);
+                        // clear value from text field
+                        AutoCompleteTextView followerView = (AutoCompleteTextView) findViewById(R.id.new_follower_name);
+                        followerView.setText("");
+                        /* add list element to gui */
+                        // Get new follower's name
+                        String followerName = ((TextView)view.findViewById(android.R.id.text1)).getText().toString();
+                        // Inflate a new layout row
+                        LayoutInflater layoutInflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                        View newFollowerRow = layoutInflater.inflate(R.layout.new_follower_list_row, null);
+                        // fill in any details dynamically here
+                        TextView textView = (TextView) newFollowerRow.findViewById(R.id.follower_name_row);
+                        textView.setText(followerName);
+                        TextView idTextView = (TextView) newFollowerRow.findViewById(R.id.follower_id);
+                        idTextView.setText(userId);
+                        idTextView.setVisibility(View.GONE);
+                        // add listener for button to remove the follower
+                        ImageButton removeFollowerBtn = (ImageButton) newFollowerRow.findViewById(R.id.remove_follower_row);
+                        removeFollowerBtn.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                // Remove follower from list
+                                RelativeLayout removedRow = (RelativeLayout) v.getParent();
+                                String removedFollowerId = ((TextView)removedRow.findViewById(R.id.follower_id)).getText().toString();
+                                ((LinearLayout)removedRow.getParent()).removeView(removedRow);
+                                // Remove follower from maintained array
+                                newFollowerAdapter.followerIds.remove(removedFollowerId);
+                            }
+                        });
+                        // insert into LinearLayout
+                        ViewGroup followersList = (ViewGroup) findViewById(R.id.new_followers_list);
+                        ViewGroup.LayoutParams lparams = new ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        followersList.addView(newFollowerRow, 0, lparams);
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
 }

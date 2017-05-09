@@ -21,6 +21,8 @@ public class SpashScreenActivity extends AppCompatActivity {
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseAuth mAuth;
 
+    private boolean isLoggedIn = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +41,8 @@ public class SpashScreenActivity extends AppCompatActivity {
                     SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
                     if (settings.getBoolean("my_first_time", true)) {
                         intent = new Intent(getApplicationContext(), SignUpActivity.class);
+                    } else if (isLoggedIn) {
+                        intent = new Intent(getApplicationContext(), MainActivity.class);
                     } else {
                         intent = new Intent(getApplicationContext(), LoginActivity.class);
                     }
@@ -61,6 +65,7 @@ public class SpashScreenActivity extends AppCompatActivity {
                 if (user != null) {
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                    isLoggedIn = true;
 
                     SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
                     if (settings.getBoolean("my_first_time", true)) {

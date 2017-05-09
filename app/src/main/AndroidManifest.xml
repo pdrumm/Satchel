@@ -17,7 +17,7 @@
         <activity android:name=".MainActivity" />
         <activity
             android:name=".LoginActivity"
-            android:label="@string/title_activity_login"></activity>
+            android:label="@string/title_activity_login" />
         <activity android:name=".SignUpActivity" />
         <activity android:name=".SpashScreenActivity">
             <intent-filter>
@@ -26,18 +26,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".NewItemActivity"></activity>
-        <activity android:name=".ConversationActivity"/>
+        <activity android:name=".NewItemActivity" />
+        <activity android:name=".ConversationActivity" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="com.cse40333.satchel.fileprovider"
-            android:grantUriPermissions="true"
-            android:exported="false">
+            android:exported="false"
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths" />
         </provider>
+
+        <activity android:name=".ItemDetailActivity"></activity>
     </application>
 
 </manifest>

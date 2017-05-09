@@ -11,6 +11,12 @@
         android:layout_centerVertical="true"
         />
 
+    <TextView
+        android:id="@+id/follower_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        />
+
     <ImageButton
         android:id="@+id/remove_follower_row"
         android:layout_width="wrap_content"

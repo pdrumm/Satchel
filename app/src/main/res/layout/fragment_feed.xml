@@ -4,13 +4,9 @@
     android:layout_height="match_parent"
     tools:context="com.cse40333.satchel.MainActivity">
 
-    <TextView
+    <ListView
+        android:id="@+id/feed_list_list_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Feed Fragment"
-        android:gravity="center"
-        android:textSize="30dp"
-        android:textStyle="bold"
-        />
+        android:layout_height="match_parent" />
 
 </FrameLayout>

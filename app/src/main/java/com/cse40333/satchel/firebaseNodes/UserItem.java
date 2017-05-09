@@ -12,6 +12,10 @@ public class UserItem {
 
     public UserItem() {}
 
+    public UserItem(boolean favorite) {
+        this.favorite = favorite;
+    }
+
     public UserItem(String name, String ownerName, String thumbnailPath, boolean favorite) {
         this.name = name;
         this.ownerName = ownerName;
