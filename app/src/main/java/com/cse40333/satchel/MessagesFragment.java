@@ -14,6 +14,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 
 
@@ -38,6 +41,10 @@ public class MessagesFragment extends Fragment {
         for(int i = 0; i < 5; i++) {
             messages.add("");
         }
+
+        FirebaseDatabase databse = FirebaseDatabase.getInstance();
+        DatabaseReference mRef = databse.getReference();
+
         ListView messageListView = (ListView) rootView.findViewById(R.id.message_list_view);
         MessagesAdapter messagesAdapter = new MessagesAdapter(getContext(), messages);
         messageListView.setAdapter(messagesAdapter);
@@ -55,12 +62,12 @@ public class MessagesFragment extends Fragment {
         View.OnClickListener newConvoClick = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getContext(), ConversationActivity.class);
+                Intent intent = new Intent(getContext(), NewConversationActivity.class);
                 startActivity(intent);
             }
         };
         FloatingActionButton newConvoFab = (FloatingActionButton) rootView.findViewById(R.id.add_conversation);
-//        newConvoFab.setOnClickListener(newConvoClick);
+        newConvoFab.setOnClickListener(newConvoClick);
 
 
         // Inflate the layout for this fragment
