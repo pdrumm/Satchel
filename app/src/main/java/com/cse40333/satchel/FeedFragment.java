@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -78,6 +79,8 @@ public class FeedFragment extends Fragment {
         DatabaseReference mRef = mDatabase.getReference("feed").child(mAuth.getCurrentUser().getUid());
         ListAdapter listAdapter = new FirebaseListAdapter<Feed>(getActivity(), Feed.class, R.layout.feed_list_row, mRef) {
             protected void populateView(View view, Feed feed, int position) {
+                // Hide welcome message
+                rootView.findViewById(R.id.feed_welcome_text).setVisibility(View.GONE);
                 // Get the thumbnail
                 final View listView = view;
                 try {

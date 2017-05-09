@@ -28,10 +28,9 @@
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/thumbnail"
         android:layout_toRightOf="@id/thumbnail"
-        android:text="TextView"
+        android:text="Your Item"
         android:textSize="15dip"
-        android:textStyle="bold"
-        />
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/item_owner"
@@ -39,10 +38,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_alignTop="@id/item_name"
-        android:gravity="right"
         android:layout_marginRight="5dip"
+        android:gravity="right"
+        android:text="Item Owner"
         android:textSize="10dip"
-        android:textStyle="bold"
-        android:text="TextView" />
+        android:textStyle="bold" />
 
 </RelativeLayout>
