@@ -4,6 +4,14 @@
     android:layout_height="match_parent"
     tools:context="com.cse40333.satchel.MainActivity">
 
+    <TextView
+        android:id="@+id/feed_welcome_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Welcome to Satchel!\nAdd items in the 'items' tab."
+        android:textAlignment="center" />
+
     <ListView
         android:id="@+id/feed_list_list_view"
         android:layout_width="match_parent"
