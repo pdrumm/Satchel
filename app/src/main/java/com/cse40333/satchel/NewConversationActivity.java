@@ -72,7 +72,8 @@ public class NewConversationActivity extends AppCompatActivity {
                 //Members conversations
                 for (String userId : members) {
                     DatabaseReference membersRef = database.getReference("userConversations").child(userId).child(newConvoKey);
-                    membersRef.setValue(new UserConversation("", "", name));
+                    Long ts = System.currentTimeMillis();
+                    membersRef.setValue(new UserConversation("Conversation created", ts.toString(), name));
                 }
 
                 Intent intent = new Intent(getApplicationContext(), ConversationActivity.class);

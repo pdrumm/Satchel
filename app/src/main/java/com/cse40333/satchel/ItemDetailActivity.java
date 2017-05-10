@@ -284,7 +284,7 @@ public class ItemDetailActivity extends AppCompatActivity
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     // Successfully downloaded data to local file
                     ImageView itemThumbnail = (ImageView) findViewById(imgViewId);
-                    itemThumbnail.setImageBitmap(decodeFile(localFile, 300, 300));
+                    itemThumbnail.setImageBitmap(decodeFile(localFile, 500, 500));
                     Log.d("TESTZZ4", "here");
                 }
             }).addOnFailureListener(new OnFailureListener() {
@@ -384,7 +384,7 @@ public class ItemDetailActivity extends AppCompatActivity
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
 
-                        //If no one is following the item, then no point in creating converation
+                        //If no one is following the item, then no point in creating conversation
                         if (dataSnapshot.child("followers").getChildrenCount() == 0) {
                             return;
                         }
@@ -395,8 +395,8 @@ public class ItemDetailActivity extends AppCompatActivity
 
                         database = FirebaseDatabase.getInstance();
 
-                        TextView itemNameView = (TextView) findViewById(R.id.itemName);
-                        name = itemNameView.getText().toString();
+                        CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+                        name = collapsingToolbarLayout.getTitle().toString();
 
                         TextView itemOwnerView = (TextView) findViewById(R.id.itemOwner);
                         String owner = itemOwnerView.getText().toString();
@@ -423,10 +423,11 @@ public class ItemDetailActivity extends AppCompatActivity
 //                        userConvosRef.setValue(new UserConversation("", "", name));
 
                                 //Members conversations
+                                Long ts = System.currentTimeMillis();
                                 if(followerIds != null) {
                                     for (String userId : followerIds) {
                                         DatabaseReference followersRef = database.getReference("userConversations").child(userId).child(newConvoKey);
-                                        followersRef.setValue(new UserConversation("", "", name));
+                                        followersRef.setValue(new UserConversation("Conversation created", ts.toString(), name));
                                     }
                                 }
 
