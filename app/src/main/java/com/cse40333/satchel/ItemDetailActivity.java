@@ -21,6 +21,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.cse40333.satchel.firebaseNodes.Conversation;
+import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.User;
 import com.cse40333.satchel.firebaseNodes.UserConversation;
@@ -52,6 +53,9 @@ public class ItemDetailActivity extends AppCompatActivity {
     private String ownerId;
     private String name;
     private ArrayList<String> followerIds = new ArrayList<String>();
+    private String userDisplayName;
+    private Long ts;
+
 
     // Firebase references
     private FirebaseAuth mAuth;
@@ -76,6 +80,8 @@ public class ItemDetailActivity extends AppCompatActivity {
 
         // Retrieve bundle extras
         itemId = getIntent().getStringExtra("itemId");
+
+        getUserDisplayName();
 
         // Add Firebase Listeners
         addItemListener();
@@ -277,6 +283,33 @@ public class ItemDetailActivity extends AppCompatActivity {
 
                     }
                 });
+
+                DatabaseReference followerRef = mDatabase.getReference("items").child(itemId);
+                ts = System.currentTimeMillis();
+                followerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Item item = dataSnapshot.getValue(Item.class);
+
+                        for (String follower : item.followers) {
+                            DatabaseReference feedRef = mDatabase.getReference("feed")
+                                    .child(follower).push();
+                            feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath, userDisplayName,
+                                    ts.toString(), "Checked out by "));
+                        }
+
+
+                        DatabaseReference feedRef = mDatabase.getReference("feed")
+                                .child(item.ownerId).push();
+                        feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath, userDisplayName,
+                                ts.toString(), "Checked out by "));
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
             }
         });
     }
@@ -408,4 +441,19 @@ public class ItemDetailActivity extends AppCompatActivity {
         return null;
     }
 
+    private void getUserDisplayName() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        final DatabaseReference usersRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                userDisplayName = dataSnapshot.getValue(User.class).displayName;
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
 }

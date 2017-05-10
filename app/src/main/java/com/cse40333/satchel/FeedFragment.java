@@ -23,6 +23,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -76,7 +77,7 @@ public class FeedFragment extends Fragment {
     private void addPopulateListViewListener() {
         // Create an adapter for the list of items and attach it to the ListView
         ListView itemListView = (ListView) rootView.findViewById(R.id.feed_list_list_view);
-        DatabaseReference mRef = mDatabase.getReference("feed").child(mAuth.getCurrentUser().getUid());
+        Query mRef = mDatabase.getReference("feed").child(mAuth.getCurrentUser().getUid()).orderByChild("timeStamp");
         ListAdapter listAdapter = new FirebaseListAdapter<Feed>(getActivity(), Feed.class, R.layout.feed_list_row, mRef) {
             protected void populateView(View view, Feed feed, int position) {
                 // Hide welcome message
@@ -117,6 +118,11 @@ public class FeedFragment extends Fragment {
                 feedTimestamp.setText(getDate(Long.parseLong(feed.timestamp)));
                 feedMessage.setText(feed.message);
                 feedUser.setText(feed.userName);
+            }
+
+            @Override
+            public Feed getItem(int pos) {
+                return super.getItem(getCount() - 1 - pos);
             }
         };
         itemListView.setAdapter(listAdapter);
