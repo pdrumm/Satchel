@@ -4,4 +4,7 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="new_item_form_spacing">35dp</dimen>
+    <!--Item Detail-->
+    <dimen name="item_detail_header_size">20dp</dimen>
+    <dimen name="item_detail_section_margin">30dp</dimen>
 </resources>

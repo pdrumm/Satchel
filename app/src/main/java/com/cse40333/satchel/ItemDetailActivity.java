@@ -3,9 +3,19 @@ package com.cse40333.satchel;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Location;
+import android.media.Image;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.transition.Slide;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -72,6 +82,11 @@ public class ItemDetailActivity extends AppCompatActivity
     private FirebaseDatabase mDatabase;
     private FirebaseDatabase database;
 
+    // Collpsing Toolbar
+    private static final String EXTRA_IMAGE = "com.cse40333.satchel.extraImage";
+    private static final String EXTRA_TITLE = "com.cse40333.satchel.extraTitle";
+    private CollapsingToolbarLayout collapsingToolbarLayout;
+
     // Google Maps
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
@@ -111,6 +126,10 @@ public class ItemDetailActivity extends AppCompatActivity
         addEditLocationClickListener();
 
         addCreateConversationListener();
+
+        // AppBarLayout
+        initAppBarLayout();
+
     }
 
     private void addItemListener() {
@@ -181,10 +200,15 @@ public class ItemDetailActivity extends AppCompatActivity
     private void setItemDetails(Item item) {
         Log.d("TESTMYTEST","What about here?");
         // get Layout views
-        TextView itemNameView = (TextView) findViewById(R.id.itemName);
+//        TextView itemNameView = (TextView) findViewById(R.id.itemName);
         RelativeLayout itemLocationView = (RelativeLayout) findViewById(R.id.item_location_container);
         // set item name
-        itemNameView.setText(item.name);
+//        itemNameView.setText(item.name);
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        toolbar.setTitle(item.name);
+        collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+        collapsingToolbarLayout.setTitle(item.name);
+//        collapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(android.R.color.transparent));
         // set item location
         RelativeLayout locationText = (RelativeLayout) findViewById(R.id.item_location_type_text);
         RelativeLayout locationImage = (RelativeLayout) findViewById(R.id.item_location_type_image);
@@ -554,7 +578,7 @@ public class ItemDetailActivity extends AppCompatActivity
     private void setMapScrollListener() {
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.getUiSettings().setZoomControlsEnabled(true);
-        final ScrollView mScrollView = (ScrollView) findViewById(R.id.item_detail_scroll); //parent scrollview in xml, give your scrollview id value
+        final NestedScrollView mScrollView = (NestedScrollView) findViewById(R.id.item_detail_scroll); //parent scrollview in xml, give your scrollview id value
 
         ((WorkaroundMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_frag))
                 .setListener(new WorkaroundMapFragment.OnTouchListener() {
@@ -566,5 +590,23 @@ public class ItemDetailActivity extends AppCompatActivity
 
     }
 
+    private void initAppBarLayout() {
+        initActivityTransitions();
+
+        ViewCompat.setTransitionName(findViewById(R.id.app_bar_layout), EXTRA_IMAGE);
+        supportPostponeEnterTransition();
+
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    private void initActivityTransitions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Slide transition = new Slide();
+            transition.excludeTarget(android.R.id.statusBarBackground, true);
+            getWindow().setEnterTransition(transition);
+            getWindow().setReturnTransition(transition);
+        }
+    }
 
 }

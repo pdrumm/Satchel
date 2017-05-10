@@ -76,7 +76,8 @@ import java.util.List;
 public class NewItemActivity extends AppCompatActivity
         implements OnMapReadyCallback,
             GoogleApiClient.ConnectionCallbacks,
-            GoogleApiClient.OnConnectionFailedListener {
+            GoogleApiClient.OnConnectionFailedListener,
+            LocationListener {
 
     // Add photo
     private ImageSelector imageSelector;
@@ -463,14 +464,18 @@ public class NewItemActivity extends AppCompatActivity
     /*
      * Google Maps
      */
-    // Activity onCreate calls enableMyLocation
+    @Override
+    protected void onStart() {
+        Log.d("MAPZ", "onStart");
+        super.onStart();
+        enableMyLocation();
+    }
     private void enableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             //Permission to access the location is missing
             PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
                     android.Manifest.permission.ACCESS_FINE_LOCATION, true);
-//        } else if (mMap != null) {
         } else {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -480,12 +485,6 @@ public class NewItemActivity extends AppCompatActivity
             mGoogleApiClient.connect();
             Log.d("MAPZ", "called connect");
         }
-    }
-    @Override
-    protected void onStart() {
-        Log.d("MAPZ", "onStart");
-        super.onStart();
-        enableMyLocation();
     }
     @Override
     public void onConnected(Bundle connectionHint) {
@@ -509,7 +508,6 @@ public class NewItemActivity extends AppCompatActivity
         Log.i("Tag", "Connection Failed");
     }
     public void getMyLocation(){
-        Log.d("MAPZ", "gettin my location");
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
@@ -517,12 +515,36 @@ public class NewItemActivity extends AppCompatActivity
         } else {
             myLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
             if (myLocation != null) {
+                Log.d("MAPZ", "myLocation != null");
                 WorkaroundMapFragment mapFragment = (WorkaroundMapFragment) getSupportFragmentManager()
                         .findFragmentById(R.id.map_frag);
                 mapFragment.getMapAsync(this);
-                Log.d("MAPZ", "yay");
+            } else {
+                Log.d("MAPZ", "myLocation == null");
+                createLocationRequest();
             }
         }
+    }
+    private void createLocationRequest() {
+        //remove location updates so that it resets
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this); //Import should not be **android.Location.LocationListener**
+        //import should be **import com.google.android.gms.location.LocationListener**;
+
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        //restart location updates with the new interval
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+    }
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.i("MAPZ", "Location Changed!");
+        Log.i("MAPZ", " Location: " + location); //I guarantee of change of location here.
+        myLocation = location;
+        WorkaroundMapFragment mapFragment = (WorkaroundMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map_frag);
+        mapFragment.getMapAsync(this);
     }
     @Override
     public void onMapReady(GoogleMap googleMap){
