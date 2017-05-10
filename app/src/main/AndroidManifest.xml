@@ -28,6 +28,7 @@
         </activity>
         <activity android:name=".NewItemActivity" />
         <activity android:name=".ConversationActivity" />
+        <activity android:name=".NewConversationActivity" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"

@@ -2,14 +2,16 @@ package com.cse40333.satchel.firebaseNodes;
 
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.util.ArrayList;
+
 @IgnoreExtraProperties
 public class Conversation {
 
-    public String title;
+    public ArrayList<String> members;
 
-    public Conversation(){}
+    public Conversation() {}
 
-    public Conversation(String title) {
-        this.title = title;
+    public Conversation(ArrayList<String> members) {
+        this.members = members;
     }
 }
