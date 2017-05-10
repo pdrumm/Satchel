@@ -3,9 +3,13 @@ package com.cse40333.satchel;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.location.Location;
 import android.media.Image;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,6 +22,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.cse40333.satchel.firebaseNodes.Conversation;
@@ -26,6 +31,15 @@ import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.User;
 import com.cse40333.satchel.firebaseNodes.UserConversation;
 import com.cse40333.satchel.firebaseNodes.UserItem;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -46,7 +60,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class ItemDetailActivity extends AppCompatActivity {
+import static java.security.AccessController.getContext;
+
+public class ItemDetailActivity extends AppCompatActivity
+        implements OnMapReadyCallback,
+            GoogleApiClient.ConnectionCallbacks,
+            GoogleApiClient.OnConnectionFailedListener {
 
     // id of the firebase element being displayed
     private String itemId;
@@ -62,6 +81,11 @@ public class ItemDetailActivity extends AppCompatActivity {
     private StorageReference mStorageRef;
     private FirebaseDatabase mDatabase;
     private FirebaseDatabase database;
+
+    // Google Maps
+    private GoogleMap mMap;
+    private GoogleApiClient mGoogleApiClient;
+    private LatLng itemMapLocation;
 
     final private String LOCATION_TEXT = "text";
     final private String LOCATION_IMAGE = "image";
@@ -92,6 +116,9 @@ public class ItemDetailActivity extends AppCompatActivity {
 
         // Add click listener for check out button
         addCheckOutClickListener();
+
+        // Add click listener for edit location button
+        addEditLocationClickListener();
 
         addCreateConversationListener();
     }
@@ -171,11 +198,13 @@ public class ItemDetailActivity extends AppCompatActivity {
         // set item location
         RelativeLayout locationText = (RelativeLayout) findViewById(R.id.item_location_type_text);
         RelativeLayout locationImage = (RelativeLayout) findViewById(R.id.item_location_type_image);
+        RelativeLayout locationMap = (RelativeLayout) findViewById(R.id.item_location_type_map);
         RelativeLayout locationChecked = (RelativeLayout) findViewById(R.id.item_location_type_checked_out);
         switch (item.locationType) {
             case LOCATION_TEXT:
                 locationText.setVisibility(View.VISIBLE);
                 locationImage.setVisibility(View.GONE);
+                locationMap.setVisibility(View.GONE);
                 locationChecked.setVisibility(View.GONE);
                 TextView tv = (TextView) locationText.findViewById(R.id.item_location_text);
                 tv.setText(item.locationValue);
@@ -183,12 +212,23 @@ public class ItemDetailActivity extends AppCompatActivity {
             case LOCATION_IMAGE:
                 locationText.setVisibility(View.GONE);
                 locationImage.setVisibility(View.VISIBLE);
+                locationMap.setVisibility(View.GONE);
                 locationChecked.setVisibility(View.GONE);
                 setItemImages(item.locationValue, R.id.item_location_image, "location");
+                break;
+            case LOCATION_MAP:
+                locationText.setVisibility(View.GONE);
+                locationImage.setVisibility(View.GONE);
+                locationMap.setVisibility(View.VISIBLE);
+                locationChecked.setVisibility(View.GONE);
+                String[] coords = item.locationValue.split(",");
+                itemMapLocation = new LatLng(Double.valueOf(coords[0]), Double.valueOf(coords[1]));
+                initMap();
                 break;
             case LOCATION_CHECKED:
                 locationText.setVisibility(View.GONE);
                 locationImage.setVisibility(View.GONE);
+                locationMap.setVisibility(View.GONE);
                 locationChecked.setVisibility(View.VISIBLE);
                 TextView tv2 = (TextView) locationChecked.findViewById(R.id.item_location_checked_out);
                 tv2.setText(item.locationValue);
@@ -199,6 +239,10 @@ public class ItemDetailActivity extends AppCompatActivity {
                 locationImage.setVisibility(View.GONE);
                 locationChecked.setVisibility(View.GONE);
         }
+        // Clear followers list
+        LinearLayout ll = (LinearLayout) findViewById(R.id.itemFollowersList);
+        ll.removeAllViews();
+
         // set followers list
         addFollowersToList(item.followers);
     }
@@ -456,4 +500,79 @@ public class ItemDetailActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void addEditLocationClickListener() {
+        Button btn = (Button) findViewById(R.id.edit_loc_button);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(v.getContext(), EditLocationActivity.class);
+                intent.putExtra("itemId",itemId);
+                startActivity(intent);
+            }
+        });
+    }
+
+    /*
+     * Google Maps
+     */
+    private void initMap() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        mGoogleApiClient.connect();
+    }
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        Log.d("MAPZ", "onConnected?");
+        if (!mGoogleApiClient.isConnected()) {
+            return;
+        }
+        Log.d("MAPZ", "onConnected");
+        WorkaroundMapFragment mapFragment = (WorkaroundMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map_frag);
+        mapFragment.getMapAsync(this);
+    }
+    @Override
+    public void onConnectionSuspended(int cause) {
+        // The connection to Google Play services was lost for some reason. We call connect() to
+        // attempt to re-establish the connection.
+        Log.i("TAG", "Connection suspended");
+        mGoogleApiClient.connect();
+    }
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
+        Log.i("Tag", "Connection Failed");
+    }
+    @Override
+    public void onMapReady(GoogleMap googleMap){
+        Log.d("MAPZ", "in onMapReady");
+        mMap = googleMap;
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(itemMapLocation, 15.0f));
+
+        // drop item's map pin
+        mMap.clear();
+        mMap.addMarker(new MarkerOptions().position(itemMapLocation));
+        setMapScrollListener();
+    }
+
+    private void setMapScrollListener() {
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        final ScrollView mScrollView = (ScrollView) findViewById(R.id.item_detail_scroll); //parent scrollview in xml, give your scrollview id value
+
+        ((WorkaroundMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_frag))
+                .setListener(new WorkaroundMapFragment.OnTouchListener() {
+                    @Override
+                    public void onTouch() {
+                        mScrollView.requestDisallowInterceptTouchEvent(true);
+                    }
+                });
+
+    }
+
+
 }
