@@ -39,6 +39,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -223,9 +224,25 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                 hm.put("locationType",locationType);
                 hm.put("locationValue",locationValue);
                 itemsRef.updateChildren(hm);
-
-                // return to previous activity
-                finish();
+                // - Storage
+                //   + location
+                if ( locationType.equals(LOCATION_IMAGE) && locationImageSelector.imageUri != null ) {
+                    StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
+                    StorageReference locationRef = mStorageRef.child(locationValue);
+                    Log.d("LOCZ", locationValue);
+                    Log.d("LOCZ", locationType);
+                    locationRef.putFile(locationImageSelector.imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            @SuppressWarnings("VisibleForTests")
+                            Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                            finish();
+                        }
+                    });
+                } else {
+                    // return to previous activity
+                    finish();
+                }
             }
         };
         // Get FAB and add listener

@@ -110,6 +110,7 @@ public class ItemDetailActivity extends AppCompatActivity
 
         // Add click listener for check out button
         addCheckOutClickListener();
+        addCheckInClickListener();
 
         // Add click listener for edit location button
         addEditLocationClickListener();
@@ -332,13 +333,48 @@ public class ItemDetailActivity extends AppCompatActivity
         });
     }
 
+    private void addCheckInClickListener() {
+        Button btn = (Button) findViewById(R.id.check_in_button);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // CHANGE LOCATION_TYPE
+                HashMap<String, Object> hm2 = new HashMap<String, Object>();
+                hm2.put("locationType", "text");
+                mDatabase.getReference("items").child(itemId).updateChildren(hm2);
+                Log.d("ONCLICK","Entered onclick");
+                //DatabaseReference itemsRef = mDatabase.getReference("Items").child(itemId);
+                DatabaseReference usersRef = mDatabase.getReference("users").child(mAuth.getCurrentUser().getUid());
+                usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        String data = dataSnapshot.getValue(User.class).displayName;
+                        data = data + " returned the item.";
+                        HashMap<String, Object> hm = new HashMap<>();
+                        hm.put("locationValue", data);
+                        mDatabase.getReference("items").child(itemId).updateChildren(hm);
+
+                        Intent intent = new Intent(getApplicationContext(), EditLocationActivity.class);
+                        intent.putExtra("itemId", itemId);
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
+    }
+
     private void addEditLocationClickListener() {
         Button btn = (Button) findViewById(R.id.edit_loc_button);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), EditLocationActivity.class);
-                intent.putExtra("itemId",itemId);
+                intent.putExtra("itemId", itemId);
                 startActivity(intent);
             }
         });
@@ -412,7 +448,8 @@ public class ItemDetailActivity extends AppCompatActivity
         supportPostponeEnterTransition();
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+//        getSupportActionBar().setDisplayShowHomeEnabled(false);
     }
 
     private void initActivityTransitions() {
