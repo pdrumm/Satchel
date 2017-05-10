@@ -25,7 +25,7 @@
         android:layout_gravity="bottom|end"
         android:clickable="true"
         app:fabSize="normal"
-        app:srcCompat="@drawable/ic_action_name"
+        app:srcCompat="@drawable/ic_white_add"
         android:elevation="3dp"
         app:pressedTranslationZ="6dp"
         app:rippleColor="#FFF"
