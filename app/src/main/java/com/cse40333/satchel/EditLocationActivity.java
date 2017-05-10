@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
+import com.cse40333.satchel.firebaseNodes.User;
 import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -37,8 +38,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -50,6 +55,8 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
 
     private ImageSelector locationImageSelector;
     String itemId;
+    private Long ts;
+    private String userDisplayName;
 
     // Show progress bar
     private Progress progress;
@@ -62,12 +69,17 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
     private LocationRequest mLocationRequest;
     private boolean mPermissionDenied = false;
     private LatLng itemMapLocation;
+    private FirebaseDatabase database;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_location);
+
+        mAuth = FirebaseAuth.getInstance();
         itemId = getIntent().getStringExtra("itemId");
+        getUserDisplayName();
 
         // Initialize location spinner
         initLocationSpinner();
@@ -215,7 +227,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                 HashMap<String, Object> hm = new HashMap<>();
 
                 // Submit new item data to Firebase
-                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                database = FirebaseDatabase.getInstance();
                 // - items
                 DatabaseReference itemsRef = database.getReference("items").child(itemId);
                 String locationType = getLocationType();
@@ -223,6 +235,33 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                 hm.put("locationType",locationType);
                 hm.put("locationValue",locationValue);
                 itemsRef.updateChildren(hm);
+
+                //Add Feed Item
+                DatabaseReference followerRef = database.getReference("items").child(itemId);
+                ts = System.currentTimeMillis();
+                followerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Item item = dataSnapshot.getValue(Item.class);
+
+                        for (String follower : item.followers) {
+                            DatabaseReference feedRef = database.getReference("feed")
+                                    .child(follower).push();
+                            feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath,
+                                    userDisplayName, ts.toString(), "Location update by"));
+                        }
+
+                        DatabaseReference feedRef = database.getReference("feed")
+                                .child(item.ownerId).push();
+                        feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath,
+                                userDisplayName, ts.toString(), "Location update by"));
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
 
                 // return to previous activity
                 finish();
@@ -317,4 +356,21 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
             }
         });
     }
+
+    private void getUserDisplayName() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        final DatabaseReference usersRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                userDisplayName = dataSnapshot.getValue(User.class).displayName;
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
 }

@@ -339,14 +339,14 @@ public class ItemDetailActivity extends AppCompatActivity
                             DatabaseReference feedRef = mDatabase.getReference("feed")
                                     .child(follower).push();
                             feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath, userDisplayName,
-                                    ts.toString(), "Checked out by "));
+                                    ts.toString(), "Checked out by"));
                         }
 
 
                         DatabaseReference feedRef = mDatabase.getReference("feed")
                                 .child(item.ownerId).push();
                         feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath, userDisplayName,
-                                ts.toString(), "Checked out by "));
+                                ts.toString(), "Checked out by"));
                     }
 
                     @Override
