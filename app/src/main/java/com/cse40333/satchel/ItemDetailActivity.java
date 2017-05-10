@@ -1,6 +1,8 @@
 package com.cse40333.satchel;
 
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.support.annotation.NonNull;
@@ -12,13 +14,16 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.cse40333.satchel.firebaseNodes.Conversation;
 import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.User;
+import com.cse40333.satchel.firebaseNodes.UserConversation;
 import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -27,12 +32,15 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,12 +48,16 @@ import java.util.HashMap;
 public class ItemDetailActivity extends AppCompatActivity {
 
     // id of the firebase element being displayed
-    String itemId;
+    private String itemId;
+    private String ownerId;
+    private String name;
+    private ArrayList<String> followerIds = new ArrayList<String>();
 
     // Firebase references
     private FirebaseAuth mAuth;
     private StorageReference mStorageRef;
     private FirebaseDatabase mDatabase;
+    private FirebaseDatabase database;
 
     final private String LOCATION_TEXT = "text";
     final private String LOCATION_IMAGE = "image";
@@ -74,6 +86,8 @@ public class ItemDetailActivity extends AppCompatActivity {
 
         // Add click listener for check out button
         addCheckOutClickListener();
+
+        addCreateConversationListener();
     }
 
     private void addItemListener() {
@@ -205,7 +219,7 @@ public class ItemDetailActivity extends AppCompatActivity {
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     // Successfully downloaded data to local file
                     ImageView itemThumbnail = (ImageView) findViewById(imgViewId);
-                    itemThumbnail.setImageBitmap(BitmapFactory.decodeFile(localFile.getAbsolutePath()));
+                    itemThumbnail.setImageBitmap(decodeFile(localFile, 300, 300));
                     Log.d("TESTZZ4", "here");
                 }
             }).addOnFailureListener(new OnFailureListener() {
@@ -265,6 +279,133 @@ public class ItemDetailActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private void addCreateConversationListener() {
+        Button convoButton = (Button) findViewById(R.id.create_conversation);
+        convoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final DatabaseReference itemRef = FirebaseDatabase.getInstance().getReference("items")
+                        .child(itemId);
+                itemRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                        //If no one is following the item, then no point in creating converation
+                        if (dataSnapshot.child("followers").getChildrenCount() == 0) {
+                            return;
+                        }
+                        //Create list of follower ids
+                        for (DataSnapshot d : dataSnapshot.child("followers").getChildren()) {
+                            followerIds.add(d.getValue().toString());
+                        }
+
+                        database = FirebaseDatabase.getInstance();
+
+                        TextView itemNameView = (TextView) findViewById(R.id.itemName);
+                        name = itemNameView.getText().toString();
+
+                        TextView itemOwnerView = (TextView) findViewById(R.id.itemOwner);
+                        String owner = itemOwnerView.getText().toString();
+                        Query ownerRef = FirebaseDatabase.getInstance()
+                                .getReference("users").orderByChild("displayName").startAt(owner)
+                                .endAt(owner+"~");
+                        ownerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                for (DataSnapshot d : dataSnapshot.getChildren()) {
+                                    Log.d("Owner", d.getKey());
+                                    ownerId = d.getKey();
+                                }
+
+                                followerIds.add(ownerId);
+
+                                //Conversations
+                                DatabaseReference convoRef = database.getReference("conversations").push();
+                                String newConvoKey = convoRef.getKey();
+                                convoRef.setValue(new Conversation(followerIds));
+
+//                        DatabaseReference userConvosRef = database.getReference("userConversations")
+//                                .child(ownerId).child(newConvoKey);
+//                        userConvosRef.setValue(new UserConversation("", "", name));
+
+                                //Members conversations
+                                for (String userId : followerIds) {
+                                    DatabaseReference followersRef = database.getReference("userConversations").child(userId).child(newConvoKey);
+                                    followersRef.setValue(new UserConversation("", "", name));
+                                }
+
+                                Intent intent = new Intent(getApplicationContext(), ConversationActivity.class);
+                                intent.putExtra("convoId", newConvoKey);
+                                startActivity(intent);
+                                finish();
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
+                        //Add User Conversation for owner
+
+//                        Log.d("Find Owner", ownerId);
+//                        followerIds.add(ownerId);
+//
+//                        //Conversations
+//                        DatabaseReference convoRef = database.getReference("conversations").push();
+//                        String newConvoKey = convoRef.getKey();
+//                        convoRef.setValue(new Conversation(followerIds));
+//
+////                        DatabaseReference userConvosRef = database.getReference("userConversations")
+////                                .child(ownerId).child(newConvoKey);
+////                        userConvosRef.setValue(new UserConversation("", "", name));
+//
+//                        //Members conversations
+//                        for (String userId : followerIds) {
+//                            DatabaseReference followersRef = database.getReference("userConversations").child(userId).child(newConvoKey);
+//                            followersRef.setValue(new UserConversation("", "", name));
+//                        }
+//
+//                        Intent intent = new Intent(getApplicationContext(), ConversationActivity.class);
+//                        intent.putExtra("convoId", newConvoKey);
+//                        startActivity(intent);
+//                        finish();
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
+    }
+
+    public static Bitmap decodeFile(File f, int WIDTH, int HIGHT){
+        try {
+            //Decode image size
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(new FileInputStream(f),null,o);
+
+            //The new size we want to scale to
+            final int REQUIRED_WIDTH=WIDTH;
+            final int REQUIRED_HIGHT=HIGHT;
+            //Find the correct scale value. It should be the power of 2.
+            int scale=1;
+            while(o.outWidth/scale/2>=REQUIRED_WIDTH && o.outHeight/scale/2>=REQUIRED_HIGHT)
+                scale*=2;
+
+            //Decode with inSampleSize
+            BitmapFactory.Options o2 = new BitmapFactory.Options();
+            o2.inSampleSize=scale;
+            return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
+        } catch (FileNotFoundException e) {}
+        return null;
     }
 
 }

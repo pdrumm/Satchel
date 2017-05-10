@@ -43,7 +43,7 @@ public class ConversationActivity extends AppCompatActivity {
     private String convoId;
     private String name;
     private String text;
-    private String time;
+    private String time, ts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,23 +150,22 @@ public class ConversationActivity extends AppCompatActivity {
                 EditText message = (EditText) findViewById(R.id.message_new_text);
                 text = message.getText().toString();
                 Long tsLong = System.currentTimeMillis();
-                String ts = tsLong.toString();
+                ts = tsLong.toString();
 
                 if (!text.equals("")) {
                     mRef.push().setValue(new Message(text, name, mUser.getUid(), ts));
                 }
                 message.setText("");
 
-                time = getDate(tsLong);
-                DatabaseReference convoRef = FirebaseDatabase.getInstance()
-                        .getReference("userConversations").child(mUser.getUid())
-                        .child(convoId).child("last_text");
-                convoRef.setValue(text);
-
-                convoRef = FirebaseDatabase.getInstance()
-                        .getReference("userConversations").child(mUser.getUid())
-                        .child(convoId).child("last_time");
-                convoRef.setValue(time);
+//                DatabaseReference convoRef = FirebaseDatabase.getInstance()
+//                        .getReference("userConversations").child(mUser.getUid())
+//                        .child(convoId).child("last_text");
+//                convoRef.setValue(text);
+//
+//                convoRef = FirebaseDatabase.getInstance()
+//                        .getReference("userConversations").child(mUser.getUid())
+//                        .child(convoId).child("last_time");
+//                convoRef.setValue(time);
 
                 DatabaseReference memberRef = FirebaseDatabase.getInstance()
                         .getReference("conversations").child(convoId);
@@ -174,15 +173,16 @@ public class ConversationActivity extends AppCompatActivity {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for (DataSnapshot d : dataSnapshot.child("members").getChildren()) {
+                            Log.d("Members", d.getValue().toString());
                             DatabaseReference userRef = FirebaseDatabase.getInstance()
-                                    .getReference("userConversations").child(mUser.getUid())
+                                    .getReference("userConversations").child(d.getValue().toString())
                                     .child(convoId).child("last_text");
                             userRef.setValue(text);
 
                             userRef = FirebaseDatabase.getInstance()
-                                    .getReference("userConversations").child(mUser.getUid())
+                                    .getReference("userConversations").child(d.getValue().toString())
                                     .child(convoId).child("last_time");
-                            userRef.setValue(time);
+                            userRef.setValue(ts);
                         }
                     }
 
@@ -195,27 +195,4 @@ public class ConversationActivity extends AppCompatActivity {
         });
     }
 
-    private String getDate(long timeStamp){
-        try{
-            // Get curr year
-            DateFormat sdf = new SimpleDateFormat("yyyy");
-            Date netDate = (new Date());
-            String currYear = sdf.format(netDate);
-            // Get year of timestamp
-            sdf = new SimpleDateFormat("yyyy");
-            netDate = (new Date(timeStamp));
-            String tsYear = sdf.format(netDate);
-
-            if (currYear.equals(tsYear)) {
-                sdf = new SimpleDateFormat("MMM d - h:mm a");
-            } else {
-                sdf = new SimpleDateFormat("MMM d, yyyy - h:mm a");
-            }
-            netDate = (new Date(timeStamp));
-            return sdf.format(netDate);
-        }
-        catch(Exception ex){
-            return "xx";
-        }
-    }
 }

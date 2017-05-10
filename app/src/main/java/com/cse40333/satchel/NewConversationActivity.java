@@ -53,23 +53,24 @@ public class NewConversationActivity extends AppCompatActivity {
             public void onClick(View view) {
                 FirebaseDatabase database = FirebaseDatabase.getInstance();
 
+                ArrayList<String> members = new ArrayList<>();
+                for (String uid : newFollowerAdapter.followerIds) {
+                    members.add(uid);
+                }
+                members.add(mAuth.getCurrentUser().getUid());
 
                 //Conversations
                 DatabaseReference convoRef = database.getReference("conversations").push();
                 String newConvoKey = convoRef.getKey();
-                convoRef.setValue(new Conversation(newFollowerAdapter.followerIds));
+                convoRef.setValue(new Conversation(members));
 
                 EditText convoName = (EditText) findViewById(R.id.conversation_name);
                 String name = convoName.getText().toString();
 
-                //Users conversations
-                DatabaseReference userConvosRef = database.getReference("userConversations").child(mAuth.getCurrentUser().getUid()).child(newConvoKey);
-                userConvosRef.setValue(new UserConversation("", "", name));
-
                 //Members conversations
-                for (String userId : newFollowerAdapter.followerIds) {
-                    DatabaseReference followersRef = database.getReference("userConversations").child(userId).child(newConvoKey);
-                    followersRef.setValue(new UserConversation("", "", name));
+                for (String userId : members) {
+                    DatabaseReference membersRef = database.getReference("userConversations").child(userId).child(newConvoKey);
+                    membersRef.setValue(new UserConversation("", "", name));
                 }
 
                 Intent intent = new Intent(getApplicationContext(), ConversationActivity.class);
