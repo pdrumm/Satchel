@@ -5,12 +5,16 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,7 +35,15 @@ import android.widget.Toast;
 
 import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
+import com.cse40333.satchel.firebaseNodes.User;
 import com.cse40333.satchel.firebaseNodes.UserItem;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -50,7 +62,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class NewItemActivity extends AppCompatActivity {
+public class NewItemActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     // Add photo
     private ImageSelector imageSelector;
@@ -66,10 +78,24 @@ public class NewItemActivity extends AppCompatActivity {
     // Keep track of the followers added
     NewFollowerAdapter newFollowerAdapter;
 
+    // User info
+    private String userDisplayName = "";
+
+    // Google Maps
+    private GoogleMap mMap;
+    private GoogleApiClient mGoogleApiClient;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private Location myLocation;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_item);
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map_frag);
+        mapFragment.getMapAsync(this);
 
         // Instantiate Firebase
         mAuth = FirebaseAuth.getInstance();
@@ -93,6 +119,9 @@ public class NewItemActivity extends AppCompatActivity {
         // Initialize Autocomplete field and add listener to it
         initFollowerAutocomplete();
 
+        // Get username from database
+        getUserDisplayName();
+
     }
 
     @Override
@@ -113,8 +142,15 @@ public class NewItemActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Retrieve form data
-                EditText itemName = (EditText) findViewById(R.id.item_name);
-                String itemNameVal = itemName.getText().toString();
+                EditText itemNameView = (EditText) findViewById(R.id.item_name);
+                String itemNameVal = itemNameView.getText().toString();
+
+                // Check for errors in form
+                if (TextUtils.isEmpty(itemNameVal)) {
+                    itemNameView.setError("Item name is required");
+                    itemNameView.requestFocus();
+                    return;
+                }
 
                 progress.showProgress(true);
 
@@ -129,45 +165,51 @@ public class NewItemActivity extends AppCompatActivity {
                 itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, locationType, locationValue, newFollowerAdapter.followerIds));
                 // Current user's userItem & feed
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);
-                userItemsRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
+                userItemsRef.setValue(new UserItem(itemNameVal, userDisplayName, thumbnailPath, false));
                 Long tsLong = System.currentTimeMillis();
                 String ts = tsLong.toString();
                 DatabaseReference feedRef = database.getReference("feed").child(mAuth.getCurrentUser().getUid()).push();
-                feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Created"));
+                feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, userDisplayName, ts, "Created"));
                 // - Followers userItems & feed
                 for (String userId : newFollowerAdapter.followerIds) {
                     // userItems
                     DatabaseReference followerRef = database.getReference("userItems").child(userId).child(newItemKey);
-                    followerRef.setValue(new UserItem(itemNameVal, mAuth.getCurrentUser().getDisplayName(), thumbnailPath, false));
+                    followerRef.setValue(new UserItem(itemNameVal, userDisplayName, thumbnailPath, false));
                     // - feed
                     feedRef = database.getReference("feed").child(userId).push();
-                    feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, mAuth.getCurrentUser().getDisplayName(), ts, "Shared with you"));
+                    feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, userDisplayName, ts, "Shared with you"));
                 }
                 // - Storage
-                //   + thumbnail
-                StorageReference thumbnailRef = mStorageRef.child(thumbnailPath);
-                thumbnailRef.putFile(imageSelector.imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        // Get a URL to the uploaded content
-                        @SuppressWarnings("VisibleForTests")
-                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                        // Return to Items list
-                        finish();
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        // Handle unsuccessful uploads
-                        progress.showProgress(false);
-                        Toast.makeText(getApplicationContext(), "Failed to upload image to Firebase", Toast.LENGTH_SHORT).show();
-                    }
-                });
                 //   + location
                 if ( locationType.equals(LOCATION_IMAGE) ) {
                     StorageReference locationRef = mStorageRef.child(locationValue);
                     locationRef.putFile(locationImageSelector.imageUri);
                 }
+                //   + thumbnail
+                StorageReference thumbnailRef = mStorageRef.child(thumbnailPath);
+                if (imageSelector.imageUri != null) {
+                    thumbnailRef.putFile(imageSelector.imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            // Get a URL to the uploaded content
+                            @SuppressWarnings("VisibleForTests")
+                            Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                            // Return to Items list
+                            finish();
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            // Handle unsuccessful uploads
+                            progress.showProgress(false);
+                            Toast.makeText(getApplicationContext(), "Failed to upload image to Firebase", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    // if the user did not add an image thumbnail, then immediately return to prev activity
+                    finish();
+                }
+
             }
         };
         // Get FAB and add listener
@@ -365,6 +407,62 @@ public class NewItemActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void getUserDisplayName() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        final DatabaseReference usersRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                 userDisplayName = dataSnapshot.getValue(User.class).displayName;
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    // Google Maps
+    @Override
+    public void onMapReady(GoogleMap googleMap){
+        mMap = googleMap;
+
+//        enableMyLocation();
+//        getMyLocation();
+        LatLng nd = new LatLng(41.703119, -86.238992); //Dome Coords
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(nd,13.0f));
+    }
+
+    private void enableMyLocation() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            //Permission to access the location is missing
+            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION, true);
+        } else if (mMap != null) {
+/*            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();*/
+            mGoogleApiClient.connect();
+//            mMap.setMyLocationEnabled(true);
+        }
+    }
+
+    public void getMyLocation(){
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION, true);
+        } else {
+//            myLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            //TODO Ask Kris what this line is for
+            //mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())));
+        }
     }
 
 }

@@ -11,5 +11,4 @@
     app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
     android:elevation="4dp"
     >
-
 </android.support.v7.widget.Toolbar>
