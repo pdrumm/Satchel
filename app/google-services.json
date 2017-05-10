@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "80291445503-d9hg832dr6usdhkj59pk666hdf67do6r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cse40333.satchel",
+            "certificate_hash": "a480929afbe9c82df594e00197b11b24fd49926e"
+          }
+        },
+        {
           "client_id": "80291445503-sr2c0msfd78fjc388skfbetnk5k88ef9.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

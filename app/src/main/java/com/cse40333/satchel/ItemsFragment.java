@@ -79,6 +79,8 @@ public class ItemsFragment extends Fragment {
         DatabaseReference mRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid());
         ListAdapter listAdapter = new FirebaseListAdapter<UserItem>(getActivity(), UserItem.class, R.layout.item_list_row, mRef) {
             protected void populateView(View view, UserItem item, int position) {
+                // Hide welcome message
+                rootView.findViewById(R.id.item_welcome_text).setVisibility(View.GONE);
                 // Get the thumbnail
                 final View listView = view;
                 try {
