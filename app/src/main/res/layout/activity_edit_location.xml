@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.cse40333.satchel.EditLocationActivity"
+    android:gravity="center_horizontal"
     >
 
     <!-- Add item progress -->
-    <include
-        android:id="@+id/new_item_progress"
-        layout="@layout/progressbar_layout"/>
-
-    <TextView
-        android:id="@+id/EditLocLabel"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Where did you leave it?" />
+        android:gravity="center_horizontal">
+        <include
+            android:id="@+id/new_item_progress"
+            layout="@layout/progressbar_layout"
+            />
+    </RelativeLayout>
+
 
     <LinearLayout
         android:id="@+id/add_new_location_linear_layout"
@@ -26,11 +27,23 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:layout_marginBottom="@dimen/new_item_form_spacing"
+        android:padding="10dp"
         >
+
+        <TextView
+            android:id="@+id/EditLocLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Where did you leave it?"
+            android:textSize="16dp"
+            android:textColor="@color/colorPrimaryDark"
+            android:layout_marginBottom="15dp"
+            />
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp">
 
             <TextView
                 android:id="@+id/location_spinner_label"
@@ -106,19 +119,21 @@
 
         </RelativeLayout>
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/submit_edit_loc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="10dp"
-            android:clickable="true"
-            android:elevation="3dp"
-            app:fabSize="normal"
-            app:pressedTranslationZ="6dp"
-            app:rippleColor="#FFF"
-            app:srcCompat="@drawable/ic_white_check" />
-
     </LinearLayout>
 
-</LinearLayout>
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/submit_edit_loc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:clickable="true"
+        android:elevation="3dp"
+        app:fabSize="normal"
+        app:pressedTranslationZ="6dp"
+        app:rippleColor="#FFF"
+        app:srcCompat="@drawable/ic_white_check"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        />
+
+</RelativeLayout>

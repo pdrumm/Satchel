@@ -11,4 +11,11 @@
     app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
     android:elevation="4dp"
     >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/satchel_logo"
+        />
+
 </android.support.v7.widget.Toolbar>
