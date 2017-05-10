@@ -18,7 +18,7 @@
         android:id="@+id/EditLocLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Enter New Location:" />
+        android:text="Where did you leave it?" />
 
     <LinearLayout
         android:id="@+id/add_new_location_linear_layout"
@@ -79,19 +79,15 @@
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_alignTop="@+id/add_item_location_image"
                 android:layout_toEndOf="@id/add_item_location_image">
 
                 <ImageView
                     android:id="@+id/item_location_image"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                    android:layout_height="wrap_content" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"></LinearLayout>
             </FrameLayout>
 
         </RelativeLayout>
@@ -106,7 +102,7 @@
                 class="com.google.android.gms.maps.SupportMapFragment"
                 android:id="@+id/map_frag"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="300dp"/>
 
         </RelativeLayout>
 

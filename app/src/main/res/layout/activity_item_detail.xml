@@ -15,152 +15,176 @@
         android:layout_height="wrap_content"
         />
 
-    <RelativeLayout
+    <ScrollView
+        android:id="@+id/item_detail_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:id="@+id/itemName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="[Item Name]" />
-
-        <CheckBox
-            android:id="@+id/itemFavorite"
-            style="?android:attr/starStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true" />
-
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:id="@+id/item_location_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:id="@+id/itemLocationLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:text="Location:" />
-
-        <RelativeLayout
-            android:id="@+id/item_location_type_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_toEndOf="@+id/itemLocationLabel"
-            >
-
-            <TextView
-                android:id="@+id/item_location_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="[location]" />
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/item_location_type_checked_out"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_toEndOf="@+id/itemLocationLabel"
-            android:layout_alignParentBottom="false"
-            android:layout_alignParentTop="true">
-
-            <TextView
-                android:id="@+id/item_location_checked_out"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="[location]" />
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/item_location_type_image"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/itemLocationLabel"
-            >
-
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                >
-
-                <ImageView
-                    android:id="@+id/item_location_image"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <!--<LinearLayout-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="match_parent"-->
-                    <!--android:orientation="vertical"></LinearLayout>-->
-            </FrameLayout>
-        </RelativeLayout>
-
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:id="@+id/itemOwnerLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:text="Owner:" />
-
-        <TextView
-            android:id="@+id/itemOwner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toEndOf="@+id/itemOwnerLabel"
-            android:text="[owner]" />
-
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:id="@+id/itemFollowersLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Followers:" />
-
-        <com.cse40333.satchel.MaxHeightScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:maxHeight="100dp"
-            android:layout_toEndOf="@id/itemFollowersLabel"
-            >
+        android:layout_height="match_parent">
 
             <LinearLayout
-                android:id="@+id/itemFollowersList"
+                android:orientation="vertical"
                 android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/itemName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="[Item Name]" />
+
+                <CheckBox
+                    android:id="@+id/itemFavorite"
+                    style="?android:attr/starStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/item_location_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/itemLocationLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="5dp"
+                    android:text="Location:" />
+
+                <RelativeLayout
+                    android:id="@+id/item_location_type_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/itemLocationLabel"
+                    >
+
+                    <TextView
+                        android:id="@+id/item_location_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="[location]" />
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/item_location_type_checked_out"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/itemLocationLabel"
+                    android:layout_alignParentBottom="false"
+                    android:layout_alignParentTop="true">
+
+                    <TextView
+                        android:id="@+id/item_location_checked_out"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="[location]" />
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/item_location_type_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@id/itemLocationLabel"
+                    >
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        >
+
+                        <ImageView
+                            android:id="@+id/item_location_image"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+
+                    </FrameLayout>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/item_location_type_map"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_toEndOf="@id/itemLocationLabel"
+                    >
+                    <fragment
+                        class="com.cse40333.satchel.WorkaroundMapFragment"
+                        android:id="@+id/map_frag"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"/>
+                </RelativeLayout>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/itemOwnerLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="5dp"
+                    android:text="Owner:" />
+
+                <TextView
+                    android:id="@+id/itemOwner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/itemOwnerLabel"
+                    android:text="[owner]" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/itemFollowersLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Followers:" />
+
+                <com.cse40333.satchel.MaxHeightScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:maxHeight="100dp"
+                    android:layout_toEndOf="@id/itemFollowersLabel"
+                    >
+
+                    <LinearLayout
+                        android:id="@+id/itemFollowersList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                </com.cse40333.satchel.MaxHeightScrollView>
+
+            </RelativeLayout>
+
+            <Button
+                android:id="@+id/check_out_button"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:text="Check out" />
 
-        </com.cse40333.satchel.MaxHeightScrollView>
+            <Button
+                android:id="@+id/edit_loc_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit location" />
 
-    </RelativeLayout>
+        </LinearLayout>
 
-    <Button
-        android:id="@+id/check_out_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Check out" />
-
-    <Button
-        android:id="@+id/edit_loc_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Edit location" />
+    </ScrollView>
 
 
 </LinearLayout>

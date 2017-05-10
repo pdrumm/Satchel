@@ -32,6 +32,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -72,7 +73,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         initLocationSpinner();
 
         // Initialize location listener
-        addLocationListener();
+        addLocationImageListener();
 
         // Instantiate Progress bar
         View mNewItemFormView = findViewById(R.id.add_new_location_linear_layout);
@@ -81,6 +82,9 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
 
         // Start Google maps
         enableMyLocation();
+
+        // add submit listener
+        addSubmitLocationListener();
     }
 
     @Override
@@ -122,19 +126,16 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                     location_text.setVisibility(View.VISIBLE);
                     location_image.setVisibility(View.GONE);
                     location_map.setVisibility(View.GONE);
-                    Log.d("SELECT","TEXT");
                 } else if (selected_location.equals(location_types[1])) {
                     // image
                     location_text.setVisibility(View.GONE);
                     location_image.setVisibility(View.VISIBLE);
                     location_map.setVisibility(View.GONE);
-                    Log.d("SELECT","IMG");
                 }  else if (selected_location.equals(location_types[2])) {
                     // map
                     location_text.setVisibility(View.GONE);
                     location_image.setVisibility(View.GONE);
                     location_map.setVisibility(View.VISIBLE);
-                    Log.d("SELECT","MAP");
                 }
             }
 
@@ -145,7 +146,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         });
     }
 
-    private void addLocationListener() {
+    private void addLocationImageListener() {
         locationImageSelector = new ImageSelector(EditLocationActivity.this, R.id.item_location_image, "location", 3, 4);
         View.OnClickListener addThumbnailClick = new View.OnClickListener() {
             @Override
@@ -192,18 +193,22 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                 break;
             case LOCATION_MAP:
                 locationLayout = (RelativeLayout) findViewById(R.id.location_type_gps);
+                if (itemMapLocation == null) {
+                    locationVal = null;
+                } else {
+                    locationVal = itemMapLocation.latitude + "," + itemMapLocation.longitude;
+                }
                 break;
         }
         return locationVal;
     }
 
-    private void submitLocationListener() {
+    private void addSubmitLocationListener() {
 
         View.OnClickListener submitItemClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Retrieve form data
-
                 progress.showProgress(true);
 
                 // hashmap to push
@@ -218,6 +223,9 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                 hm.put("locationType",locationType);
                 hm.put("locationValue",locationValue);
                 itemsRef.updateChildren(hm);
+
+                // return to previous activity
+                finish();
             }
         };
         // Get FAB and add listener
@@ -282,7 +290,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         } else {
             myLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
             if (myLocation != null) {
-                WorkaroundMapFragment mapFragment = (WorkaroundMapFragment) getSupportFragmentManager()
+                SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                         .findFragmentById(R.id.map_frag);
                 mapFragment.getMapAsync(this);
                 Log.d("MAPZ", "yay");
@@ -298,7 +306,6 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         LatLng curCoord = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curCoord, 15.0f));
         setMapListener();
-        setMapScrollListener();
     }
     private void setMapListener() {
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -310,17 +317,4 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
             }
         });
     }
-    private void setMapScrollListener() {
-        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        mMap.getUiSettings().setZoomControlsEnabled(true);
-        final ScrollView mScrollView = (ScrollView) findViewById(R.id.new_item_form_scroll); //parent scrollview in xml, give your scrollview id value
-        ((WorkaroundMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_frag))
-                .setListener(new WorkaroundMapFragment.OnTouchListener() {
-                    @Override
-                    public void onTouch() {
-                        mScrollView.requestDisallowInterceptTouchEvent(true);
-                    }
-                });
-    }
-
 }
