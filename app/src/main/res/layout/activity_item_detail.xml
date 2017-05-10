@@ -49,7 +49,7 @@
         <RelativeLayout
             android:id="@+id/item_location_type_text"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_toEndOf="@+id/itemLocationLabel"
             >
 
@@ -62,26 +62,42 @@
         </RelativeLayout>
 
         <RelativeLayout
+            android:id="@+id/item_location_type_checked_out"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/itemLocationLabel"
+            android:layout_alignParentBottom="false"
+            android:layout_alignParentTop="true">
+
+            <TextView
+                android:id="@+id/item_location_checked_out"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[location]" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
             android:id="@+id/item_location_type_image"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_toEndOf="@id/itemLocationLabel"
             >
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 >
 
                 <ImageView
                     android:id="@+id/item_location_image"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                    android:layout_height="wrap_content" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"></LinearLayout>
+                <!--<LinearLayout-->
+                    <!--android:layout_width="match_parent"-->
+                    <!--android:layout_height="match_parent"-->
+                    <!--android:orientation="vertical"></LinearLayout>-->
             </FrameLayout>
         </RelativeLayout>
 
@@ -133,6 +149,19 @@
         </com.cse40333.satchel.MaxHeightScrollView>
 
     </RelativeLayout>
+
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="vertical">-->
+
+    <!--</LinearLayout>-->
+
+    <Button
+        android:id="@+id/check_out_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check out" />
 
 
 </LinearLayout>

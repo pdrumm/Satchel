@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -49,6 +50,7 @@ public class ItemDetailActivity extends AppCompatActivity {
     final private String LOCATION_TEXT = "text";
     final private String LOCATION_IMAGE = "image";
     final private String LOCATION_MAP = "map";
+    final private String LOCATION_CHECKED = "checked";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +71,9 @@ public class ItemDetailActivity extends AppCompatActivity {
 
         // Update favorite field in FB when star is clicked
         addFavoriteClickListener();
+
+        // Add click listener for check out button
+        addCheckOutClickListener();
     }
 
     private void addItemListener() {
@@ -137,6 +142,7 @@ public class ItemDetailActivity extends AppCompatActivity {
     }
 
     private void setItemDetails(Item item) {
+        Log.d("TESTMYTEST","What about here?");
         // get Layout views
         TextView itemNameView = (TextView) findViewById(R.id.itemName);
         RelativeLayout itemLocationView = (RelativeLayout) findViewById(R.id.item_location_container);
@@ -145,21 +151,33 @@ public class ItemDetailActivity extends AppCompatActivity {
         // set item location
         RelativeLayout locationText = (RelativeLayout) findViewById(R.id.item_location_type_text);
         RelativeLayout locationImage = (RelativeLayout) findViewById(R.id.item_location_type_image);
+        RelativeLayout locationChecked = (RelativeLayout) findViewById(R.id.item_location_type_checked_out);
         switch (item.locationType) {
             case LOCATION_TEXT:
                 locationText.setVisibility(View.VISIBLE);
                 locationImage.setVisibility(View.GONE);
+                locationChecked.setVisibility(View.GONE);
                 TextView tv = (TextView) locationText.findViewById(R.id.item_location_text);
                 tv.setText(item.locationValue);
                 break;
             case LOCATION_IMAGE:
                 locationText.setVisibility(View.GONE);
                 locationImage.setVisibility(View.VISIBLE);
+                locationChecked.setVisibility(View.GONE);
                 setItemImages(item.locationValue, R.id.item_location_image, "location");
+                break;
+            case LOCATION_CHECKED:
+                locationText.setVisibility(View.GONE);
+                locationImage.setVisibility(View.GONE);
+                locationChecked.setVisibility(View.VISIBLE);
+                TextView tv2 = (TextView) locationChecked.findViewById(R.id.item_location_checked_out);
+                tv2.setText(item.locationValue);
+                //Log.d("CHECKED","Totally got checked out");
                 break;
             default:
                 locationText.setVisibility(View.GONE);
                 locationImage.setVisibility(View.GONE);
+                locationChecked.setVisibility(View.GONE);
         }
         // set followers list
         addFollowersToList(item.followers);
@@ -214,6 +232,37 @@ public class ItemDetailActivity extends AppCompatActivity {
                 HashMap<String, Object> hm = new HashMap<String, Object>();
                 hm.put("favorite", isChecked);
                 userItemsRef.updateChildren(hm);
+            }
+        });
+    }
+
+    private void addCheckOutClickListener() {
+        Button btn = (Button) findViewById(R.id.check_out_button);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // CHANGE LOCATION_TYPE
+                HashMap<String, Object> hm2 = new HashMap<String, Object>();
+                hm2.put("locationType", "checked");
+                mDatabase.getReference("items").child(itemId).updateChildren(hm2);
+                Log.d("ONCLICK","Entered onclick");
+                //DatabaseReference itemsRef = mDatabase.getReference("Items").child(itemId);
+                DatabaseReference usersRef = mDatabase.getReference("users").child(mAuth.getCurrentUser().getUid());
+                usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        String data = dataSnapshot.getValue(User.class).displayName;
+                        data = "Currently checked out by " + data;
+                        HashMap<String, Object> hm = new HashMap<>();
+                        hm.put("locationValue", data);
+                        mDatabase.getReference("items").child(itemId).updateChildren(hm);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
             }
         });
     }
