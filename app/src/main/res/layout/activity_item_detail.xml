@@ -234,6 +234,13 @@
 
         </android.support.v4.widget.NestedScrollView>
 
+    <Button
+        android:id="@+id/create_conversation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create Conversation" />
+
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

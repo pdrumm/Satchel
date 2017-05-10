@@ -9,22 +9,18 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
-import com.cse40333.satchel.firebaseNodes.UserItem;
+import com.cse40333.satchel.firebaseNodes.User;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -35,10 +31,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -51,6 +50,8 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
 
     private ImageSelector locationImageSelector;
     String itemId;
+    private Long ts;
+    private String userDisplayName;
 
     // Show progress bar
     private Progress progress;
@@ -63,12 +64,17 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
     private LocationRequest mLocationRequest;
     private boolean mPermissionDenied = false;
     private LatLng itemMapLocation;
+    private FirebaseDatabase database;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_location);
+
+        mAuth = FirebaseAuth.getInstance();
         itemId = getIntent().getStringExtra("itemId");
+        getUserDisplayName();
 
         // Initialize location spinner
         initLocationSpinner();
@@ -216,7 +222,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                 HashMap<String, Object> hm = new HashMap<>();
 
                 // Submit new item data to Firebase
-                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                database = FirebaseDatabase.getInstance();
                 // - items
                 DatabaseReference itemsRef = database.getReference("items").child(itemId);
                 String locationType = getLocationType();
@@ -224,6 +230,38 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                 hm.put("locationType",locationType);
                 hm.put("locationValue",locationValue);
                 itemsRef.updateChildren(hm);
+
+                //Add Feed Item
+                DatabaseReference followerRef = database.getReference("items").child(itemId);
+                ts = System.currentTimeMillis();
+                followerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Item item = dataSnapshot.getValue(Item.class);
+
+                        if(item.followers != null) {
+                            for (String follower : item.followers) {
+                                DatabaseReference feedRef = database.getReference("feed")
+                                        .child(follower).push();
+                                feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath,
+                                        userDisplayName, ts.toString(), "Location update by"));
+                            }
+                        }
+
+                        DatabaseReference feedRef = database.getReference("feed")
+                                .child(item.ownerId).push();
+                        feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath,
+                                userDisplayName, ts.toString(), "Location update by"));
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+                // return to previous activity
+                finish();
                 // - Storage
                 //   + location
                 if ( locationType.equals(LOCATION_IMAGE) && locationImageSelector.imageUri != null ) {
@@ -271,12 +309,14 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
             Log.d("MAPZ", "called connect");
         }
     }
+
     @Override
     protected void onStart() {
         Log.d("MAPZ", "onStart");
         super.onStart();
         enableMyLocation();
     }
+
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.d("MAPZ", "onConnected?");
@@ -287,6 +327,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         getMyLocation();
 //        createLocationRequest();
     }
+
     @Override
     public void onConnectionSuspended(int cause) {
         // The connection to Google Play services was lost for some reason. We call connect() to
@@ -294,10 +335,12 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         Log.i("TAG", "Connection suspended");
         mGoogleApiClient.connect();
     }
+
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult result) {
         Log.i("Tag", "Connection Failed");
     }
+
     public void getMyLocation(){
         Log.d("MAPZ", "gettin my location");
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -314,6 +357,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
             }
         }
     }
+
     @Override
     public void onMapReady(GoogleMap googleMap){
         Log.d("MAPZ", "in onMapReady");
@@ -324,6 +368,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curCoord, 15.0f));
         setMapListener();
     }
+
     private void setMapListener() {
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
@@ -334,4 +379,21 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
             }
         });
     }
+
+    private void getUserDisplayName() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        final DatabaseReference usersRef = database.getReference("users").child(mAuth.getCurrentUser().getUid());
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                userDisplayName = dataSnapshot.getValue(User.class).displayName;
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
 }
