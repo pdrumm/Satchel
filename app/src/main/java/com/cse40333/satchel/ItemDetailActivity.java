@@ -1,6 +1,7 @@
 package com.cse40333.satchel;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.support.annotation.NonNull;
@@ -36,6 +37,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import static java.security.AccessController.getContext;
 
 public class ItemDetailActivity extends AppCompatActivity {
 
@@ -74,6 +77,9 @@ public class ItemDetailActivity extends AppCompatActivity {
 
         // Add click listener for check out button
         addCheckOutClickListener();
+
+        // Add click listener for edit location button
+        addEditLocationClickListener();
     }
 
     private void addItemListener() {
@@ -179,6 +185,10 @@ public class ItemDetailActivity extends AppCompatActivity {
                 locationImage.setVisibility(View.GONE);
                 locationChecked.setVisibility(View.GONE);
         }
+        // Clear followers list
+        LinearLayout ll = (LinearLayout) findViewById(R.id.itemFollowersList);
+        ll.removeAllViews();
+
         // set followers list
         addFollowersToList(item.followers);
     }
@@ -263,6 +273,18 @@ public class ItemDetailActivity extends AppCompatActivity {
 
                     }
                 });
+            }
+        });
+    }
+
+    private void addEditLocationClickListener() {
+        Button btn = (Button) findViewById(R.id.edit_loc_button);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(v.getContext(), EditLocationActivity.class);
+                intent.putExtra("itemId",itemId);
+                startActivity(intent);
             }
         });
     }

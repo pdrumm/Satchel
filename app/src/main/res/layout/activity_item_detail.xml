@@ -150,18 +150,17 @@
 
     </RelativeLayout>
 
-    <!--<LinearLayout-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:orientation="vertical">-->
-
-    <!--</LinearLayout>-->
-
     <Button
         android:id="@+id/check_out_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Check out" />
+
+    <Button
+        android:id="@+id/edit_loc_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Edit location" />
 
 
 </LinearLayout>
