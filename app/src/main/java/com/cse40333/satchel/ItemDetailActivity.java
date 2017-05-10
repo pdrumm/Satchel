@@ -350,11 +350,13 @@ public class ItemDetailActivity extends AppCompatActivity
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         Item item = dataSnapshot.getValue(Item.class);
 
-                        for (String follower : item.followers) {
-                            DatabaseReference feedRef = mDatabase.getReference("feed")
-                                    .child(follower).push();
-                            feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath, userDisplayName,
-                                    ts.toString(), "Checked out by"));
+                        if (item.followers != null) {
+                            for (String follower : item.followers) {
+                                DatabaseReference feedRef = mDatabase.getReference("feed")
+                                        .child(follower).push();
+                                feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath, userDisplayName,
+                                        ts.toString(), "Checked out by"));
+                            }
                         }
 
 
