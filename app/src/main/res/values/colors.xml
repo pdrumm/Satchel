@@ -17,5 +17,7 @@
     <color name="secondary_text">#757575</color>
     <color name="icons">#FFFFFF</color>
     <color name="divider">#BDBDBD</color>
+    <color name="incoming_message_color">#5bc236</color>
+    <color name="outgoing_message_color">#cccccc</color>
 
 </resources>

@@ -164,10 +164,10 @@
 
 
                     <fragment
-                        class="com.google.android.gms.maps.SupportMapFragment"
+                        class="com.cse40333.satchel.WorkaroundMapFragment"
                         android:id="@+id/map_frag"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"/>
+                        android:layout_height="200dp"/>
 
                     <!--
                     <fragment xmlns:android="http://schemas.android.com/apk/res/android"

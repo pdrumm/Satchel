@@ -102,8 +102,13 @@ public class ConversationActivity extends AppCompatActivity {
                     ViewGroup.LayoutParams lparams = new ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
                     );
+
                     TextView messageText = (TextView) message.findViewById(R.id.message_text);
+                    TextView messageTime = (TextView) message.findViewById(R.id.message_time);
+
                     messageText.setText(newMessage.text);
+                    messageTime.setText(getDate(Long.parseLong(newMessage.timeStamp)));
+
                     messages.addView(message, lparams);
                 } else {
                     LinearLayout message = (LinearLayout) inflater.inflate(R.layout.incoming_message, null);
@@ -111,7 +116,13 @@ public class ConversationActivity extends AppCompatActivity {
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
                     );
                     TextView messageText = (TextView) message.findViewById(R.id.message_text);
+                    TextView messageTime = (TextView) message.findViewById(R.id.message_time);
+                    TextView messageSender = (TextView) message.findViewById(R.id.message_sender);
+
                     messageText.setText(newMessage.text);
+                    messageTime.setText(getDate(Long.parseLong(newMessage.timeStamp)));
+                    messageSender.setText(newMessage.name);
+
                     messages.addView(message, lparams);
                 }
             }
@@ -194,5 +205,30 @@ public class ConversationActivity extends AppCompatActivity {
             }
         });
     }
+
+    private String getDate(long timeStamp){
+        try{
+            // Get curr year
+            DateFormat sdf = new SimpleDateFormat("yyyy");
+            Date netDate = (new Date());
+            String currYear = sdf.format(netDate);
+            // Get year of timestamp
+            sdf = new SimpleDateFormat("yyyy");
+            netDate = (new Date(timeStamp));
+            String tsYear = sdf.format(netDate);
+
+            if (currYear.equals(tsYear)) {
+                sdf = new SimpleDateFormat("MMM d - h:mm a");
+            } else {
+                sdf = new SimpleDateFormat("MMM d, yyyy - h:mm a");
+            }
+            netDate = (new Date(timeStamp));
+            return sdf.format(netDate);
+        }
+        catch(Exception ex){
+            return "xx";
+        }
+    }
+
 
 }

@@ -4,14 +4,18 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -29,6 +33,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,13 +42,19 @@ import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.User;
 import com.cse40333.satchel.firebaseNodes.UserItem;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -62,7 +73,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class NewItemActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class NewItemActivity extends AppCompatActivity
+        implements OnMapReadyCallback,
+            GoogleApiClient.ConnectionCallbacks,
+            GoogleApiClient.OnConnectionFailedListener {
 
     // Add photo
     private ImageSelector imageSelector;
@@ -84,18 +98,16 @@ public class NewItemActivity extends AppCompatActivity implements OnMapReadyCall
     // Google Maps
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 900;
     private Location myLocation;
-
+    private LocationRequest mLocationRequest;
+    private boolean mPermissionDenied = false;
+    private LatLng itemMapLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_item);
-
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map_frag);
-        mapFragment.getMapAsync(this);
 
         // Instantiate Firebase
         mAuth = FirebaseAuth.getInstance();
@@ -122,11 +134,28 @@ public class NewItemActivity extends AppCompatActivity implements OnMapReadyCall
         // Get username from database
         getUserDisplayName();
 
+        // Start Google maps
+        enableMyLocation();
+
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        imageSelector.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (PermissionUtils.isPermissionGranted(permissions, grantResults,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+                // Enable the my location layer if the permission has been granted.
+                enableMyLocation();
+            } else {
+                // Display the missing permission error dialog when the fragments resume.
+                mPermissionDenied = true;
+            }
+
+        } else {
+            imageSelector.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+
+
     }
 
     @Override
@@ -144,6 +173,15 @@ public class NewItemActivity extends AppCompatActivity implements OnMapReadyCall
                 // Retrieve form data
                 EditText itemNameView = (EditText) findViewById(R.id.item_name);
                 String itemNameVal = itemNameView.getText().toString();
+                // Get new item key and generate remaining item attributes
+                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                DatabaseReference itemsRef = database.getReference("items").push();
+                String newItemKey = itemsRef.getKey();
+                String thumbnailPath = (imageSelector.imageUri == null ? "default" : newItemKey) + "/thumbnail.jpg";
+                String locationType = getLocationType();
+                String locationValue = getLocationValue(locationType, newItemKey);
+                Long tsLong = System.currentTimeMillis();
+                String ts = tsLong.toString();
 
                 // Check for errors in form
                 if (TextUtils.isEmpty(itemNameVal)) {
@@ -155,19 +193,11 @@ public class NewItemActivity extends AppCompatActivity implements OnMapReadyCall
                 progress.showProgress(true);
 
                 // Submit new item data to Firebase
-                FirebaseDatabase database = FirebaseDatabase.getInstance();
                 // - items
-                DatabaseReference itemsRef = database.getReference("items").push();
-                String newItemKey = itemsRef.getKey();
-                String thumbnailPath = (imageSelector.imageUri == null ? "default" : newItemKey) + "/thumbnail.jpg";
-                String locationType = getLocationType();
-                String locationValue = getLocationValue(locationType, newItemKey);
                 itemsRef.setValue(new Item(itemNameVal, mAuth.getCurrentUser().getUid(), thumbnailPath, locationType, locationValue, newFollowerAdapter.followerIds));
                 // Current user's userItem & feed
                 DatabaseReference userItemsRef = database.getReference("userItems").child(mAuth.getCurrentUser().getUid()).child(newItemKey);
                 userItemsRef.setValue(new UserItem(itemNameVal, userDisplayName, thumbnailPath, false));
-                Long tsLong = System.currentTimeMillis();
-                String ts = tsLong.toString();
                 DatabaseReference feedRef = database.getReference("feed").child(mAuth.getCurrentUser().getUid()).push();
                 feedRef.setValue(new Feed(newItemKey, itemNameVal, thumbnailPath, userDisplayName, ts, "Created"));
                 // - Followers userItems & feed
@@ -324,6 +354,11 @@ public class NewItemActivity extends AppCompatActivity implements OnMapReadyCall
                 break;
             case LOCATION_MAP:
                 locationLayout = (RelativeLayout) findViewById(R.id.location_type_gps);
+                if (itemMapLocation == null) {
+                    locationVal = null;
+                } else {
+                    locationVal = itemMapLocation.latitude + "," + itemMapLocation.longitude;
+                }
                 break;
         }
         return locationVal;
@@ -425,44 +460,108 @@ public class NewItemActivity extends AppCompatActivity implements OnMapReadyCall
         });
     }
 
-    // Google Maps
-    @Override
-    public void onMapReady(GoogleMap googleMap){
-        mMap = googleMap;
-
-//        enableMyLocation();
-//        getMyLocation();
-        LatLng nd = new LatLng(41.703119, -86.238992); //Dome Coords
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(nd,13.0f));
-    }
-
+    /*
+     * Google Maps
+     */
+    // Activity onCreate calls enableMyLocation
     private void enableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             //Permission to access the location is missing
             PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
                     android.Manifest.permission.ACCESS_FINE_LOCATION, true);
-        } else if (mMap != null) {
-/*            mGoogleApiClient = new GoogleApiClient.Builder(this)
+//        } else if (mMap != null) {
+        } else {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
-                    .build();*/
+                    .build();
             mGoogleApiClient.connect();
-//            mMap.setMyLocationEnabled(true);
+            Log.d("MAPZ", "called connect");
         }
     }
-
+    @Override
+    protected void onStart() {
+        Log.d("MAPZ", "onStart");
+        super.onStart();
+        enableMyLocation();
+    }
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        Log.d("MAPZ", "onConnected?");
+        if (!mGoogleApiClient.isConnected()) {
+            return;
+        }
+        Log.d("MAPZ", "onConnected");
+        getMyLocation();
+//        createLocationRequest();
+    }
+    @Override
+    public void onConnectionSuspended(int cause) {
+        // The connection to Google Play services was lost for some reason. We call connect() to
+        // attempt to re-establish the connection.
+        Log.i("TAG", "Connection suspended");
+        mGoogleApiClient.connect();
+    }
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
+        Log.i("Tag", "Connection Failed");
+    }
     public void getMyLocation(){
+        Log.d("MAPZ", "gettin my location");
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
                     android.Manifest.permission.ACCESS_FINE_LOCATION, true);
         } else {
-//            myLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            //TODO Ask Kris what this line is for
-            //mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())));
+            myLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            if (myLocation != null) {
+                WorkaroundMapFragment mapFragment = (WorkaroundMapFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.map_frag);
+                mapFragment.getMapAsync(this);
+                Log.d("MAPZ", "yay");
+            }
         }
+    }
+    @Override
+    public void onMapReady(GoogleMap googleMap){
+        Log.d("MAPZ", "in onMapReady");
+        mMap = googleMap;
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        LatLng curCoord = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curCoord, 15.0f));
+
+        setMapListener();
+        setMapScrollListener();
+    }
+
+    private void setMapListener() {
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
+            @Override
+            public void onMapClick(LatLng point) {
+                itemMapLocation = point;
+                mMap.clear();
+                mMap.addMarker(new MarkerOptions().position(point));
+            }
+        });
+    }
+
+    private void setMapScrollListener() {
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        final ScrollView mScrollView = (ScrollView) findViewById(R.id.new_item_form_scroll); //parent scrollview in xml, give your scrollview id value
+
+        ((WorkaroundMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_frag))
+                .setListener(new WorkaroundMapFragment.OnTouchListener() {
+                    @Override
+                    public void onTouch() {
+                        mScrollView.requestDisallowInterceptTouchEvent(true);
+                    }
+                });
+
     }
 
 }
