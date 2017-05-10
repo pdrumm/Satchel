@@ -17,14 +17,16 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.cse40333.satchel.firebaseNodes.Feed;
-import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.firebase.ui.database.FirebaseListAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -68,7 +70,22 @@ public class FeedFragment extends Fragment {
         rootView = inflater.inflate(R.layout.fragment_feed, container, false);
 
         // Populate the Feed list
-        addPopulateListViewListener();
+        DatabaseReference ref = mDatabase.getReference("feed").child(mAuth.getCurrentUser().getUid());
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    addPopulateListViewListener();
+                } else {
+                    rootView.findViewById(R.id.feed_welcome_text).setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
         // Add listeners to each item in list
         addFeedListListener();
@@ -84,7 +101,7 @@ public class FeedFragment extends Fragment {
         ListAdapter listAdapter = new FirebaseListAdapter<Feed>(getActivity(), Feed.class, R.layout.feed_list_row, mRef) {
             protected void populateView(View view, Feed feed, int position) {
                 // Hide welcome message
-                rootView.findViewById(R.id.feed_welcome_text).setVisibility(View.GONE);
+//                rootView.findViewById(R.id.feed_welcome_text).setVisibility(View.GONE);
                 // Get the thumbnail
                 final View listView = view;
                 try {

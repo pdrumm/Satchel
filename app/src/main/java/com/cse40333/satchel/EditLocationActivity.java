@@ -3,29 +3,23 @@ package com.cse40333.satchel;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.cse40333.satchel.firebaseNodes.Feed;
 import com.cse40333.satchel.firebaseNodes.Item;
 import com.cse40333.satchel.firebaseNodes.User;
-import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -36,16 +30,12 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.util.HashMap;
 
@@ -244,11 +234,13 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         Item item = dataSnapshot.getValue(Item.class);
 
-                        for (String follower : item.followers) {
-                            DatabaseReference feedRef = database.getReference("feed")
-                                    .child(follower).push();
-                            feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath,
-                                    userDisplayName, ts.toString(), "Location update by"));
+                        if(item.followers != null) {
+                            for (String follower : item.followers) {
+                                DatabaseReference feedRef = database.getReference("feed")
+                                        .child(follower).push();
+                                feedRef.setValue(new Feed(itemId, item.name, item.thumbnailPath,
+                                        userDisplayName, ts.toString(), "Location update by"));
+                            }
                         }
 
                         DatabaseReference feedRef = database.getReference("feed")
@@ -293,12 +285,14 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
             Log.d("MAPZ", "called connect");
         }
     }
+
     @Override
     protected void onStart() {
         Log.d("MAPZ", "onStart");
         super.onStart();
         enableMyLocation();
     }
+
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.d("MAPZ", "onConnected?");
@@ -309,6 +303,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         getMyLocation();
 //        createLocationRequest();
     }
+
     @Override
     public void onConnectionSuspended(int cause) {
         // The connection to Google Play services was lost for some reason. We call connect() to
@@ -316,10 +311,12 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         Log.i("TAG", "Connection suspended");
         mGoogleApiClient.connect();
     }
+
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult result) {
         Log.i("Tag", "Connection Failed");
     }
+
     public void getMyLocation(){
         Log.d("MAPZ", "gettin my location");
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -336,6 +333,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
             }
         }
     }
+
     @Override
     public void onMapReady(GoogleMap googleMap){
         Log.d("MAPZ", "in onMapReady");
@@ -346,6 +344,7 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curCoord, 15.0f));
         setMapListener();
     }
+
     private void setMapListener() {
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override

@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -29,11 +28,6 @@ import com.google.firebase.database.ValueEventListener;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Random;
-
-/**
- * Created by Kris on 4/11/2017.
- */
 
 public class ConversationActivity extends AppCompatActivity {
 
@@ -43,7 +37,7 @@ public class ConversationActivity extends AppCompatActivity {
     private String convoId;
     private String name;
     private String text;
-    private String time, ts;
+    private String ts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,16 +161,6 @@ public class ConversationActivity extends AppCompatActivity {
                     mRef.push().setValue(new Message(text, name, mUser.getUid(), ts));
                 }
                 message.setText("");
-
-//                DatabaseReference convoRef = FirebaseDatabase.getInstance()
-//                        .getReference("userConversations").child(mUser.getUid())
-//                        .child(convoId).child("last_text");
-//                convoRef.setValue(text);
-//
-//                convoRef = FirebaseDatabase.getInstance()
-//                        .getReference("userConversations").child(mUser.getUid())
-//                        .child(convoId).child("last_time");
-//                convoRef.setValue(time);
 
                 DatabaseReference memberRef = FirebaseDatabase.getInstance()
                         .getReference("conversations").child(convoId);

@@ -1,15 +1,9 @@
 package com.cse40333.satchel;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.content.pm.PackageManager;
-import android.content.Intent;
 import android.graphics.BitmapFactory;
-import android.location.Location;
-import android.media.Image;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,7 +12,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -33,7 +26,6 @@ import com.cse40333.satchel.firebaseNodes.UserConversation;
 import com.cse40333.satchel.firebaseNodes.UserItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -59,8 +51,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import static java.security.AccessController.getContext;
 
 public class ItemDetailActivity extends AppCompatActivity
         implements OnMapReadyCallback,
@@ -408,9 +398,11 @@ public class ItemDetailActivity extends AppCompatActivity
 //                        userConvosRef.setValue(new UserConversation("", "", name));
 
                                 //Members conversations
-                                for (String userId : followerIds) {
-                                    DatabaseReference followersRef = database.getReference("userConversations").child(userId).child(newConvoKey);
-                                    followersRef.setValue(new UserConversation("", "", name));
+                                if(followerIds != null) {
+                                    for (String userId : followerIds) {
+                                        DatabaseReference followersRef = database.getReference("userConversations").child(userId).child(newConvoKey);
+                                        followersRef.setValue(new UserConversation("", "", name));
+                                    }
                                 }
 
                                 Intent intent = new Intent(getApplicationContext(), ConversationActivity.class);

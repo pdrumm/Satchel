@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,7 +7,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.cse40333.satchel.NewItemActivity"
-    android:orientation="vertical"
     android:gravity="center_horizontal"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
@@ -16,9 +15,14 @@
     >
 
     <!-- Add item progress -->
-    <include
-        android:id="@+id/new_item_progress"
-        layout="@layout/progressbar_layout"/>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+        <include
+            android:id="@+id/new_item_progress"
+            layout="@layout/progressbar_layout"/>
+    </RelativeLayout>
 
     <ScrollView
         android:id="@+id/new_item_form_scroll"
@@ -49,7 +53,7 @@
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/new_item_form_spacing"
                 >
 
@@ -62,7 +66,7 @@
 
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_alignTop="@+id/add_item_thumbnail"
                     android:layout_toEndOf="@id/add_item_thumbnail"
                     >
@@ -70,13 +74,14 @@
                     <ImageView
                         android:id="@+id/item_thumbnail"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
                         />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"></LinearLayout>
+                    <!--<LinearLayout-->
+                        <!--android:layout_width="match_parent"-->
+                        <!--android:layout_height="match_parent"-->
+                        <!--android:orientation="vertical"></LinearLayout>-->
                 </FrameLayout>
 
             </RelativeLayout>
@@ -84,14 +89,14 @@
             <LinearLayout
                 android:id="@+id/add_new_location_linear_layout"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginBottom="@dimen/new_item_form_spacing"
                 >
 
                 <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="wrap_content">
 
                     <TextView
                         android:id="@+id/location_spinner_label"
@@ -104,13 +109,14 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_toEndOf="@+id/location_spinner_label"
+                        android:layout_marginBottom="15dp"
                         />
                 </RelativeLayout>
 
                 <RelativeLayout
                     android:id="@+id/location_type_text"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     >
 
                     <android.support.design.widget.TextInputLayout
@@ -130,7 +136,7 @@
                 <RelativeLayout
                     android:id="@+id/location_type_image"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="wrap_content">
 
                     <Button
                         android:id="@+id/add_item_location_image"
@@ -139,20 +145,17 @@
                         android:text="Add Location" />
 
                     <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
                         android:layout_alignTop="@+id/add_item_location_image"
                         android:layout_toEndOf="@id/add_item_location_image">
 
                         <ImageView
                             android:id="@+id/item_location_image"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent" />
+                            android:layout_height="wrap_content"
+                            android:adjustViewBounds="true"/>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"></LinearLayout>
                     </FrameLayout>
 
                 </RelativeLayout>
@@ -160,7 +163,7 @@
                 <RelativeLayout
                     android:id="@+id/location_type_gps"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="wrap_content">
 
 
                     <fragment
@@ -185,7 +188,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 >
 
@@ -216,23 +219,37 @@
 
             </LinearLayout>
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/submit_new_item"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="10dp"
-                android:clickable="true"
-                android:elevation="3dp"
-                app:fabSize="normal"
-                app:pressedTranslationZ="6dp"
-                app:rippleColor="#FFF"
-                app:srcCompat="@drawable/ic_white_check" />
+            <!--<android.support.design.widget.FloatingActionButton-->
+                <!--android:id="@+id/submit_new_item"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_gravity="bottom|end"-->
+                <!--android:layout_margin="10dp"-->
+                <!--android:clickable="true"-->
+                <!--android:elevation="3dp"-->
+                <!--app:fabSize="normal"-->
+                <!--app:pressedTranslationZ="6dp"-->
+                <!--app:rippleColor="#FFF"-->
+                <!--app:srcCompat="@drawable/ic_white_check" />-->
 
         </LinearLayout>
 
     </ScrollView>
 
-</LinearLayout>
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/submit_new_item"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="10dp"
+        android:clickable="true"
+        android:elevation="3dp"
+        app:fabSize="normal"
+        app:pressedTranslationZ="6dp"
+        app:rippleColor="#FFF"
+        app:srcCompat="@drawable/ic_white_check" />
+
+</RelativeLayout>
 
 

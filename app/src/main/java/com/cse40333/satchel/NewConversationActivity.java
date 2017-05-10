@@ -52,7 +52,9 @@ public class NewConversationActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 FirebaseDatabase database = FirebaseDatabase.getInstance();
-
+                if(newFollowerAdapter.followerIds == null) {
+                    return;
+                }
                 ArrayList<String> members = new ArrayList<>();
                 for (String uid : newFollowerAdapter.followerIds) {
                     members.add(uid);
