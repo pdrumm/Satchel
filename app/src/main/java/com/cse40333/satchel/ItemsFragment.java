@@ -66,9 +66,6 @@ public class ItemsFragment extends Fragment {
         // Handler for New Item FAB
         addNewItemListener();
 
-        Log.d("USERZ", mAuth.getCurrentUser().getEmail());
-//        Log.d("USERZ", mAuth.getCurrentUser().getDisplayName());
-
         // Inflate the layout for this fragment
         return rootView;
     }
