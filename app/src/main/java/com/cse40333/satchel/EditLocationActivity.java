@@ -36,6 +36,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.HashMap;
 
@@ -257,6 +260,25 @@ public class EditLocationActivity extends AppCompatActivity implements OnMapRead
 
                 // return to previous activity
                 finish();
+                // - Storage
+                //   + location
+                if ( locationType.equals(LOCATION_IMAGE) && locationImageSelector.imageUri != null ) {
+                    StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
+                    StorageReference locationRef = mStorageRef.child(locationValue);
+                    Log.d("LOCZ", locationValue);
+                    Log.d("LOCZ", locationType);
+                    locationRef.putFile(locationImageSelector.imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            @SuppressWarnings("VisibleForTests")
+                            Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                            finish();
+                        }
+                    });
+                } else {
+                    // return to previous activity
+                    finish();
+                }
             }
         };
         // Get FAB and add listener
